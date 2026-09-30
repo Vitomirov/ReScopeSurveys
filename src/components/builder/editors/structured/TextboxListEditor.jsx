@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { SectionLabel } from '@/components/ui'
 import { EditableListRow } from '@/components/shared'
 import { makeTextboxRow } from '@/store/surveyStore'
-import { OPEN_TEXT_PLACEHOLDER_UNICODE } from '@/constants/placeholders'
+import { OPEN_TEXT_PLACEHOLDER } from '@/constants/placeholders'
 
 export function TextboxListEditor({ question, dispatch }) {
   const cfg = question.textboxListConfig
@@ -74,7 +74,7 @@ export function TextboxListEditor({ question, dispatch }) {
         <label className="text-xs text-ink-500 mb-1 block">Input placeholder text</label>
         <input type="text" value={cfg.placeholder}
           onChange={e => updateCfg({ placeholder: e.target.value })}
-          placeholder={OPEN_TEXT_PLACEHOLDER_UNICODE}
+          placeholder={OPEN_TEXT_PLACEHOLDER}
           className="input-base text-sm" />
       </div>
 
@@ -85,7 +85,7 @@ export function TextboxListEditor({ question, dispatch }) {
           <div key={row.id} className="flex items-center gap-3">
             <span className="text-sm text-ink-700 w-32 shrink-0 font-medium">{row.label || 'Label'}</span>
             <div className="flex-1 h-9 border border-ink-200 rounded-lg bg-white flex items-center px-3">
-              <span className="text-sm text-ink-300">{cfg.placeholder || OPEN_TEXT_PLACEHOLDER_UNICODE}</span>
+              <span className="text-sm text-ink-300">{cfg.placeholder || OPEN_TEXT_PLACEHOLDER}</span>
             </div>
           </div>
         ))}

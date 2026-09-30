@@ -1,4 +1,4 @@
-import { OPEN_TEXT_PLACEHOLDER_UNICODE } from '@/constants/placeholders'
+import { OPEN_TEXT_PLACEHOLDER } from '@/constants/placeholders'
 
 export function TextboxListQ({ question, value = {}, onChange }) {
   const cfg = question.textboxListConfig
@@ -14,7 +14,7 @@ export function TextboxListQ({ question, value = {}, onChange }) {
             type="text"
             value={value[row.id] || ''}
             onChange={e => onChange({ ...value, [row.id]: e.target.value })}
-            placeholder={cfg.placeholder || OPEN_TEXT_PLACEHOLDER_UNICODE}
+            placeholder={cfg.placeholder || OPEN_TEXT_PLACEHOLDER}
             className="flex-1 border-2 border-ink-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-all"
           />
         </div>

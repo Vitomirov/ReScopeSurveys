@@ -2,7 +2,7 @@
 
 Day-2 guide for platform operators — updates, backups, enterprise customers, monitoring, and troubleshooting.
 
-**Related:** [DEPLOY.md](DEPLOY.md) (first deploy) · [ARCHITECTURE.md](ARCHITECTURE.md) (design) · [SECURITY_AUDIT.md](SECURITY_AUDIT.md) (security posture)
+**Related:** [DEPLOY.md](DEPLOY.md) (first deploy) · [ARCHITECTURE.md](ARCHITECTURE.md) (design) · [SECURITY_CONTROLS.md](SECURITY_CONTROLS.md) · [SECURITY_ROADMAP.md](SECURITY_ROADMAP.md)
 
 ---
 
@@ -25,6 +25,8 @@ docker compose logs -f web          # nginx access
 sudo journalctl -u caddy -n 50      # TLS / certificate issues
 ```
 
+
+
 ### Restart application (no image change)
 
 ```bash
@@ -39,7 +41,11 @@ docker compose up -d --force-recreate api
 
 ---
 
+
+
 ## Releases and rollback
+
+
 
 ### Standard update
 
@@ -78,7 +84,11 @@ sudo systemctl reload caddy
 
 ---
 
+
+
 ## Backups and restore
+
+
 
 ### Manual backup
 
@@ -94,25 +104,63 @@ Output: `/opt/backups/rescopesurveys-YYYY-MM-DD-HHMM.sql.gz`
 ./scripts/deploy/backup.sh --install-cron
 ```
 
-### Restore
+
+
+### Off-host copy (required for production)
+
+Use a dedicated SSH account on a second host. Add this to
+`/opt/rescopesurveys/.env`:
+
+```bash
+OFFSITE_BACKUP_TARGET=backupuser@backup.example:/srv/rescopesurveys
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/REPLACE/ME
+```
+
+Run and prove a copy exists:
 
 ```bash
 cd /opt/rescopesurveys
-gunzip -c /opt/backups/rescopesurveys-2026-09-09-0300.sql.gz \
-  | docker compose exec -T postgres psql -U rescopesurveys -d rescopesurveys
+./scripts/deploy/backup.sh
+ssh backupuser@backup.example \
+  'ls -lh /srv/rescopesurveys/rescopesurveys-*.sql.gz'
 ```
 
-Test restores periodically on a non-production instance.
+The script exits non-zero if the dump or rsync copy fails and sends a webhook
+notification when configured. Restrict the backup account to its destination.
+S0 copies are not encrypted by this script; encrypted off-host backups remain
+an S3 roadmap control.
 
-### Off-site copies
+### Restore drill (throwaway database)
 
-Copy dumps to your workstation or object storage:
+Never test a restore over production. Run this before first paid fieldwork and
+at least quarterly:
 
 ```bash
-scp root@VPS_IP:/opt/backups/rescopesurveys-*.sql.gz ./backups/
+cd /opt/rescopesurveys
+DUMP=/opt/backups/rescopesurveys-2026-09-09-0300.sql.gz
+POSTGRES_USER="$(sed -n 's/^POSTGRES_USER=//p' .env)"
+
+docker compose exec -T postgres \
+  createdb -U "${POSTGRES_USER:-rescopesurveys}" rescope_restore_drill
+gunzip -c "$DUMP" | docker compose exec -T postgres \
+  psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-rescopesurveys}" \
+  -d rescope_restore_drill
+docker compose exec -T postgres \
+  psql -U "${POSTGRES_USER:-rescopesurveys}" -d rescope_restore_drill \
+  -c 'SELECT count(*) AS organizations FROM organizations;' \
+  -c 'SELECT count(*) AS surveys FROM surveys;' \
+  -c 'SELECT count(*) AS responses FROM responses;'
+docker compose exec -T postgres \
+  dropdb -U "${POSTGRES_USER:-rescopesurveys}" rescope_restore_drill
 ```
 
+Record the date, dump filename, row counts, operator, and result. Success
+requires `psql` to exit zero and plausible counts. To test the off-host copy,
+rsync that dump back into `/opt/backups/` first.
+
 ---
+
+
 
 ## Enterprise customers (hosted SaaS)
 
@@ -120,12 +168,16 @@ Enterprise is a **subscription tier** on your multi-tenant platform, not a separ
 
 ### What Enterprise includes
 
-| Feature | Description |
-|---------|-------------|
+
+| Feature              | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
 | Custom survey domain | Public URLs on `surveys.client.com` after DNS verification |
-| Brand lock | Enforce org brand defaults in survey editor |
-| 100 seats | Higher team limit |
-| Unlimited surveys | No survey count cap |
+| Brand lock           | Enforce org brand defaults in survey editor                |
+| 100 seats            | Higher team limit                                          |
+| Unlimited surveys    | No survey count cap                                        |
+
+
+
 
 ### Platform owner workflow
 
@@ -136,6 +188,8 @@ Enterprise is a **subscription tier** on your multi-tenant platform, not a separ
 5. Enter **Survey domain** → e.g. `client.com`.
 6. Click **Save subscription**.
 7. Optionally create an invoice.
+
+
 
 ### Customer admin workflow (after you upgrade them)
 
@@ -159,14 +213,18 @@ A customer who runs Docker on their own server gets the full stack with their ow
 
 ---
 
+
+
 ## Subscription management (all plans)
 
-| Plan | Seats | Surveys | Notable features |
-|------|-------|---------|------------------|
-| `free_trial` | 1 | 5 | 14-day trial |
-| `starter` | 5 | Unlimited | Base paid tier |
-| `professional` | 25 | Unlimited | Brand Kit, embeds, hide branding |
-| `enterprise` | 100 | Unlimited | Custom domain, brand lock |
+
+| Plan           | Seats | Surveys   | Notable features                 |
+| -------------- | ----- | --------- | -------------------------------- |
+| `free_trial`   | 1     | 5         | 14-day trial                     |
+| `starter`      | 5     | Unlimited | Base paid tier                   |
+| `professional` | 25    | Unlimited | Brand Kit, embeds, hide branding |
+| `enterprise`   | 100   | Unlimited | Custom domain, brand lock        |
+
 
 Plans are assigned manually via Platform Console. Self-service checkout is not implemented.
 
@@ -174,7 +232,11 @@ Inactive statuses (`canceled`, `past_due`, expired trial) block authoring and pu
 
 ---
 
+
+
 ## Monitoring
+
+
 
 ### Resource usage
 
@@ -190,21 +252,78 @@ Watch during peak traffic:
 - Memory above ~3.2 GB on a 4 GB VPS
 - Postgres restarts or OOM kills
 
+
+
 ### Health endpoints
 
-| URL | Purpose |
-|-----|---------|
-| `http://127.0.0.1:8080/health` | Stack health (loopback) |
+
+| URL                                 | Purpose                     |
+| ----------------------------------- | --------------------------- |
+| `http://127.0.0.1:8080/health`      | Stack health (loopback)     |
 | `https://app.yourdomain.com/health` | Public health through Caddy |
 
-### Recommended alerts (manual or external tooling)
 
-- HTTPS certificate expiry (Caddy auto-renews; alert on renewal failures)
-- Disk usage above 80%
-- `docker compose ps` shows unhealthy or restarting containers
-- Backup cron last-run age > 25 hours
+
+
+### S0 alerts (cron + webhook)
+
+Set `ALERT_WEBHOOK_URL` in `.env` to a Slack-compatible webhook, then install:
+
+```bash
+(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/rescopesurveys/scripts/deploy/monitor.sh >> /opt/backups/monitor.log 2>&1') | crontab -
+```
+
+This alerts when `/health` is down, the newest dump is older than 25 hours, or
+at least 20 nginx responses are 429/5xx within five minutes. Override with
+`ERROR_THRESHOLD`, `ERROR_WINDOW`, and `BACKUP_MAX_AGE_HOURS`.
+
+Test delivery immediately:
+
+```bash
+cd /opt/rescopesurveys
+HEALTH_URL=http://127.0.0.1:1/health \
+BACKUP_MAX_AGE_HOURS=999999 ./scripts/deploy/monitor.sh
+```
+
+Expected: non-zero exit and an API-health notification within five minutes.
+During active fieldwork, acknowledge API-down alerts within 15 minutes and
+begin recovery immediately. Failed webhook delivery is visible in
+`/opt/backups/monitor.log`.
+
+Also monitor certificate expiry, disk above 80%, and unhealthy containers.
+
+### Privileged MFA rollout and recovery
+
+MFA enrollment is gradual: existing `admin` and `platform_owner` sessions keep
+working until each user enrolls from **My account → Two-factor
+authentication**. Add a stable key to an existing production `.env` and
+recreate the API:
+
+```bash
+printf '\nMFA_ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env
+chmod 600 .env
+docker compose up -d --force-recreate api
+```
+
+Store this key off the VPS. Losing or rotating it makes enrolled TOTP secrets
+unreadable. Each user must save the one-time recovery codes shown at enrollment.
+
+If a privileged user loses both authenticator and codes, verify identity and
+disable MFA from the VPS:
+
+```bash
+docker compose exec -T postgres psql -U rescopesurveys -d rescopesurveys \
+  -c "UPDATE users SET mfa_enabled=false, mfa_secret=NULL, \
+mfa_recovery_codes=ARRAY[]::TEXT[], user_token_version=user_token_version+1 \
+WHERE user_email='verified-user@example.com';"
+docker compose restart api
+```
+
+Record this as a security incident; the user must sign in and enroll again.
 
 ---
+
+
 
 ## Capacity planning
 
@@ -229,7 +348,11 @@ Upgrade path: larger VPS (CX32), or separate database host for heavy workloads.
 
 ---
 
+
+
 ## Troubleshooting
+
+
 
 ### Certificate errors
 
@@ -272,6 +395,8 @@ docker compose version
 sudo ss -tlnp | grep 8080   # should show 127.0.0.1 only
 ```
 
+
+
 ### `surveys.yourdomain.com/path` shows dashboard
 
 Hostname must be exactly `surveys.yourdomain.com`. Survey must be `live` with matching `publicPath`.
@@ -279,6 +404,8 @@ Hostname must be exactly `surveys.yourdomain.com`. Survey must be `live` with ma
 ```bash
 curl https://surveys.yourdomain.com/api/public/surveys/<publicPath>
 ```
+
+
 
 ### Docker permission denied
 
@@ -290,24 +417,31 @@ You cannot change `POSTGRES_PASSWORD` in `.env` without recreating the volume or
 
 ---
 
+
+
 ## Security maintenance
 
 - Apply Ubuntu security updates; reboot when kernel updates require it
 - Rotate `JWT_SECRET` only with a planned session invalidation (all users must re-login)
-- Review [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for open remediation items before marketing to regulated customers
+- Review [SECURITY_ROADMAP.md](SECURITY_ROADMAP.md) for your usage stage before onboarding regulated or Enterprise customers
 - Never commit `.env`, backup files, or secrets to git
 
 ---
 
+
+
 ## Quick reference
 
-| Task | Command |
-|------|---------|
-| Deploy update | `./scripts/deploy/deploy.sh v0.1.1` |
-| Status | `docker compose ps` |
-| API logs | `docker compose logs -f api` |
-| Health check | `./scripts/deploy/verify.sh` |
-| DNS check | `./scripts/deploy/check-dns.sh` |
-| Backup now | `./scripts/deploy/backup.sh` |
-| Reload Caddy | `sudo systemctl reload caddy` |
-| Stop stack | `docker compose down` (data retained in `pgdata` volume) |
+
+| Task          | Command                                                  |
+| ------------- | -------------------------------------------------------- |
+| Deploy update | `./scripts/deploy/deploy.sh v0.1.1`                      |
+| Status        | `docker compose ps`                                      |
+| API logs      | `docker compose logs -f api`                             |
+| Health check  | `./scripts/deploy/verify.sh`                             |
+| DNS check     | `./scripts/deploy/check-dns.sh`                          |
+| Backup now    | `./scripts/deploy/backup.sh`                             |
+| Reload Caddy  | `sudo systemctl reload caddy`                            |
+| Stop stack    | `docker compose down` (data retained in `pgdata` volume) |
+
+

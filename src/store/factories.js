@@ -1,10 +1,5 @@
 import { isChoiceType } from '@/utils/survey/questions/questionHelpers'
-import {
-  OPEN_TEXT_PLACEHOLDER,
-  OPEN_TEXT_PLACEHOLDER_UNICODE,
-  SPECIFY_PLACEHOLDER,
-  SPECIFY_PLACEHOLDER_UNICODE,
-} from '@/constants/placeholders'
+import { OPEN_TEXT_PLACEHOLDER, SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
 import { makeNavigationLock } from '@/constants/navigationLock'
 import { newId } from './id'
 
@@ -34,7 +29,7 @@ export const makeImageOption      = (text = '') => ({
   imageAlt:    '',
   terminates:  false,
   isExclusive: false,
-  openText:    { enabled: false, placeholder: SPECIFY_PLACEHOLDER_UNICODE },
+  openText:    { enabled: false, placeholder: SPECIFY_PLACEHOLDER },
 })
 export const makeSemanticRow      = (leftLabel = '', rightLabel = '') => ({ id: newId(), leftLabel, rightLabel })
 export const makeCascadeItem      = (label = '', level = 0, parentId = null) => ({ id: newId(), label, level, parentId })
@@ -96,7 +91,7 @@ export const makeQuestion = (questionType = 'single_select') => {
 
     openTextConfig: {
       multiline: true,
-      placeholder: 'Type your answer here...',
+      placeholder: OPEN_TEXT_PLACEHOLDER,
       minLength: null,
       maxLength: null,
       validation: {
@@ -222,7 +217,7 @@ export const makeQuestion = (questionType = 'single_select') => {
         makeTextboxRow('Brand 2'),
         makeTextboxRow('Brand 3'),
       ],
-      placeholder:  OPEN_TEXT_PLACEHOLDER_UNICODE,
+      placeholder:  OPEN_TEXT_PLACEHOLDER,
       instruction:  '',
     },
 

@@ -1,8 +1,8 @@
-import { UserX, Zap, Download } from 'lucide-react'
+import { UserX, Zap } from 'lucide-react'
 
 import { DEFAULT_SCREEN_MESSAGES } from '@/constants/surveyDefaults'
 
-export function TerminationScreen({ settings, terminatedBy, onReset, onDownload, isPublic = false }) {
+export function TerminationScreen({ settings, terminatedBy, isPublic = false }) {
   const title   = settings?.terminateTitle   || DEFAULT_SCREEN_MESSAGES.terminateTitle
   const message = settings?.terminateMessage || DEFAULT_SCREEN_MESSAGES.terminateMessage
   return (
@@ -24,12 +24,6 @@ export function TerminationScreen({ settings, terminatedBy, onReset, onDownload,
             <p className="text-xs text-amber-700 font-medium">👁 Preview mode — this is the screen-out page respondents will see</p>
           </div>
         )}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3">
-          {!isPublic && <button onClick={onReset} className="btn-ghost border border-ink-200 justify-center">← Restart</button>}
-          <button onClick={onDownload} className="btn-primary flex items-center gap-2 justify-center">
-            <Download size={14} /> Download CSV
-          </button>
-        </div>
       </div>
     </div>
   )

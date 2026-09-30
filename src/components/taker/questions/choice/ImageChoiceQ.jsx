@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
-import { SPECIFY_PLACEHOLDER_UNICODE } from '@/constants/placeholders'
+import { SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
 
 export function ImageChoiceQ({ question, value, onChange }) {
   const cfg     = question.imageChoiceConfig
@@ -95,7 +95,7 @@ export function ImageChoiceQ({ question, value, onChange }) {
                     type="text"
                     value={companions[opt.id] || ''}
                     onChange={e => setCompanions(c => ({ ...c, [opt.id]: e.target.value }))}
-                    placeholder={opt.openText.placeholder || SPECIFY_PLACEHOLDER_UNICODE}
+                    placeholder={opt.openText.placeholder || SPECIFY_PLACEHOLDER}
                     className="w-full border border-ink-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-400"
                   />
                 </div>
