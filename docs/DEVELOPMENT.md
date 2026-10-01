@@ -2,7 +2,7 @@
 
 Set up a local environment for feature work, debugging, and pre-release verification.
 
-**Related:** [ARCHITECTURE.md](ARCHITECTURE.md) · [CODE_REFERENCE.md](CODE_REFERENCE.md) · [CI.md](CI.md)
+**Related:** [ARCHITECTURE.md](ARCHITECTURE.md) · [CODE_REFERENCE.md](CODE_REFERENCE.md) · [CI.md](CI.md) · [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
 ---
 
@@ -115,6 +115,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 ```bash
 npm run check:registries
+node --test scripts/tests/unit/http-errors.test.mjs
 npm run test:track-a
 npm run test:config
 npm run build

@@ -2,7 +2,7 @@
 
 Module layout and stable import paths for developers extending question types, wiring features, or onboarding to the codebase.
 
-**Related:** [ARCHITECTURE.md](ARCHITECTURE.md) · [DEVELOPMENT.md](DEVELOPMENT.md)
+**Related:** [ARCHITECTURE.md](ARCHITECTURE.md) · [DEVELOPMENT.md](DEVELOPMENT.md) · [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
 ---
 
@@ -158,6 +158,8 @@ Dual-mode stores branch on `useApi` (`src/config/api.js`):
 
 Route handlers: `server/src/routes/`. Business logic: `server/src/lib/`.
 
+Global errors: `server/src/lib/httpErrors.js` → `publicErrorResponse()` (see [ERROR_HANDLING.md](ERROR_HANDLING.md)).
+
 ---
 
 ## Shared package
@@ -214,6 +216,8 @@ Ensures builder registry, taker registry, `TYPE_ICONS`, and `TYPE_COLORS` match 
 | SurveyPreview | Taker/preview errors — Try again / Reload |
 
 Development shows the error message. Production shows a friendly recovery screen.
+
+Full stack behavior (API mapping, `apiFetch`, auth codes, tests): [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 ---
 

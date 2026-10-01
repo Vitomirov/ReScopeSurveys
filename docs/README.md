@@ -11,7 +11,7 @@ Professional documentation for deploying, operating, and maintaining Rescope Sur
 | **Platform operator** — run the SaaS on a VPS you control | [DEPLOY.md](DEPLOY.md) → [OPERATIONS.md](OPERATIONS.md) |
 | **Developer** — contribute features or fix bugs | [DEVELOPMENT.md](DEVELOPMENT.md) → [ARCHITECTURE.md](ARCHITECTURE.md) |
 | **DevOps / release engineer** — build images and automate delivery | [DOCKER.md](DOCKER.md) → [CI.md](CI.md) |
-| **Maintainer** — understand design decisions and code layout | [ARCHITECTURE.md](ARCHITECTURE.md) → [CODE_REFERENCE.md](CODE_REFERENCE.md) |
+| **Maintainer** — understand design decisions and code layout | [ARCHITECTURE.md](ARCHITECTURE.md) → [CODE_REFERENCE.md](CODE_REFERENCE.md) · [ERROR_HANDLING.md](ERROR_HANDLING.md) |
 | **QA** — manual regression after changes | [SMOKE_CHECKLIST.md](SMOKE_CHECKLIST.md) |
 
 Security posture and remediation roadmap: [SECURITY_AUDIT.md](SECURITY_AUDIT.md) *(maintained separately)*.
@@ -29,6 +29,7 @@ Security posture and remediation roadmap: [SECURITY_AUDIT.md](SECURITY_AUDIT.md)
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Local development setup, workflows, and verification |
 | [CI.md](CI.md) | Continuous integration, release tagging, and automated VPS deployment |
 | [CODE_REFERENCE.md](CODE_REFERENCE.md) | Frontend module layout, store actions, logic engines, and API surface |
+| [ERROR_HANDLING.md](ERROR_HANDLING.md) | API and SPA error contracts, Prisma mapping, auth codes, and verification |
 | [SMOKE_CHECKLIST.md](SMOKE_CHECKLIST.md) | Manual QA checklist for builder, taker, and export flows |
 
 ---
