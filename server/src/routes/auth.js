@@ -183,12 +183,12 @@ export async function registerAuthRoutes(app) {
       })
       return { session }
     } catch (err) {
-      clearAuthCookies(reply)
-      const code = err instanceof RefreshTokenError ? err.code : 'UNAUTHORIZED'
-      if (code === 'REUSE_DETECTED') {
-        return reply.code(401).send({ error: 'Unauthorized', code })
+      if (!(err instanceof RefreshTokenError)) {
+        throw err
       }
-      return reply.code(401).send({ error: 'Unauthorized', code: 'UNAUTHORIZED' })
+      clearAuthCookies(reply)
+      const code = err.code === 'REUSE_DETECTED' ? err.code : 'UNAUTHORIZED'
+      return reply.code(401).send({ error: 'Unauthorized', code })
     }
   })
 
