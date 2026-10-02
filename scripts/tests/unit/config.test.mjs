@@ -228,6 +228,7 @@ test('nginx and Caddy ship browser security headers', () => {
   assert.doesNotMatch(nginx, /X-Frame-Options/)
 
   const caddy = readFileSync(resolve(__dirname, '../../../docker/caddy/Caddyfile'), 'utf8')
+  assert.match(caddy, /Strict-Transport-Security "max-age=63072000; includeSubDomains"/)
   assert.match(caddy, /X-Frame-Options SAMEORIGIN/)
   assert.match(caddy, /rescopesurveys\.com, www\.rescopesurveys\.com/)
   assert.match(caddy, /surveys\.rescopesurveys\.com/)

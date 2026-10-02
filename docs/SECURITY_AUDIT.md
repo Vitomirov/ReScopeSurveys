@@ -51,7 +51,7 @@ The platform is **not yet enterprise-ready**. Highest residual risks are incompl
 | **2.1** | P2 | Rate-limit tuning for enterprise NAT (shared-office IP quotas) |
 | **4** | P1 | Authoritative JSON schemas; security audit log; MFA (TOTP) for admins; data governance & fingerprinting controls |
 | **5** | P2 | Container hardening; CI/CD security gates; monitoring & alerting; PostgreSQL RLS evaluation |
-| **6** | P3 | Browser/upload polish (HSTS, CSP reporting); host SSH hardening; penetration test; `SECURITY.md` |
+| **6** | P3 | Browser/upload polish (CSP reporting); host SSH hardening; penetration test; `SECURITY.md` |
 
 ---
 
@@ -118,6 +118,8 @@ The platform is **not yet enterprise-ready**. Highest residual risks are incompl
 - **Caddy ask** rate-limited; domain allowlist + DNS TXT verification for enterprise hosts.
 
 *References:* `docker/nginx.conf`, `docker/caddy/Caddyfile`, `server/src/routes/internal.js`, `server/src/lib/survey/surveyPublicPath.js`
+
+- **HSTS:** host Caddy `(browser_security)` sends `Strict-Transport-Security` with two-year `max-age` and `includeSubDomains` (no preload). Documented in [SECURITY_CONTROLS.md](SECURITY_CONTROLS.md).
 
 ### 3.7 Infrastructure & deployment
 
@@ -232,7 +234,7 @@ Tenant isolation is application-enforced only; PostgreSQL RLS not enabled.
 
 ### P3 — Lower priority / defense in depth
 
-- **CSP polish:** remove remaining inline handlers in `index.html` (font loader); add HSTS, CSP reporting, narrower image hosts.
+- **CSP polish:** remove remaining inline handlers in `index.html` (font loader); CSP reporting, narrower image hosts.
 - **Upload validation:** magic-byte checks for avatars/logos; dedicated asset origin.
 - **Public anti-automation:** signed collector links, optional bot challenges, deduplication rules.
 - **Local/demo mode:** plaintext storage in browser — must never ship with `VITE_USE_API=false` in production builds.

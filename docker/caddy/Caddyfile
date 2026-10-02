@@ -39,6 +39,7 @@
 }
 
 (browser_security) {
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
 	header X-Content-Type-Options nosniff
 	header Referrer-Policy strict-origin-when-cross-origin
 	header Permissions-Policy "camera=(), microphone=(), geolocation=()"
