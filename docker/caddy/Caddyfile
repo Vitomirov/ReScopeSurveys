@@ -38,11 +38,11 @@
 	}
 }
 
+# HSTS only at the TLS edge. nosniff / Referrer-Policy / Permissions-Policy live in
+# docker/nginx.conf — do not duplicate here (MDN Observatory treats two identical
+# values as invalid: "nosniff, nosniff").
 (browser_security) {
 	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
-	header X-Content-Type-Options nosniff
-	header Referrer-Policy strict-origin-when-cross-origin
-	header Permissions-Policy "camera=(), microphone=(), geolocation=()"
 }
 
 app.rescopesurveys.com, rescopesurveys.com, www.rescopesurveys.com {

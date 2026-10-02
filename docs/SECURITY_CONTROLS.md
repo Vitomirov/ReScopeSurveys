@@ -12,3 +12,12 @@ Layers **already intended for production** in Rescope Surveys. For planned work,
 | **Why** | TLS terminates at Caddy; browsers should treat HTTPS as mandatory for those hostnames after the first successful visit. |
 | **Prevents** | SSL stripping and accidental downgrade to plain HTTP (e.g. user clicks `http://` links); reduces exposure of session cookies on insecure transport when combined with `Secure` cookies. |
 | **Does not prevent** | Attacks on first visit before HSTS is cached; mis-issued certificates; compromise of the origin server; attacks that already run over HTTPS (XSS, CSRF if misconfigured). Does not replace correct DNS and certificate management. |
+
+## Browser response headers (nosniff, CSP, etc.)
+
+| | |
+|---|---|
+| **What** | `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Content-Security-Policy` are set once on responses from **nginx** inside the web container (`docker/nginx.conf`). Caddy adds **HSTS only** so scanners and browsers do not see duplicate security headers. |
+| **Why** | TLS terminates at Caddy; HTML/API headers are applied where routes differ (SPA, `/api/`, `/embed/`). |
+| **Prevents** | MIME sniffing (`nosniff`), referrer leakage, and framing/XSS issues per location CSP. |
+| **Does not prevent** | Application-layer bugs; missing headers on responses that never reach nginx (rare Caddy-only errors). |
