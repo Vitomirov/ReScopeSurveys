@@ -6,32 +6,40 @@ Browser-based survey authoring and delivery platform for market research and CX 
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|------------|
-| **Frontend** | React 18, Vite 5, Tailwind CSS 3, @dnd-kit, Lucide React |
-| **State** | React `useReducer` + `surveyReducer`; debounced autosave hook |
-| **Backend** | Fastify 5, @fastify/jwt, @fastify/cors, bcrypt |
-| **Database** | PostgreSQL 16, Prisma 6 |
-| **Deploy** | Docker Compose (nginx + API + Postgres), multi-stage Dockerfiles |
-| **Load tests** | k6 against a Compose stack capped at 2 CPU / 4 GB |
-| **Tests** | Node.js built-in test runner (`node --test`) |
+
+| Layer          | Technology                                                       |
+| -------------- | ---------------------------------------------------------------- |
+| **Frontend**   | React 18, Vite 5, Tailwind CSS 3, @dnd-kit, Lucide React         |
+| **State**      | React `useReducer` + `surveyReducer`; debounced autosave hook    |
+| **Backend**    | Fastify 5, @fastify/jwt, @fastify/cors, bcrypt                   |
+| **Database**   | PostgreSQL 16, Prisma 6                                          |
+| **Deploy**     | Docker Compose (nginx + API + Postgres), multi-stage Dockerfiles |
+| **Load tests** | k6 against a Compose stack capped at 2 CPU / 4 GB                |
+| **Tests**      | Node.js built-in test runner (`node --test`)                     |
+
 
 ---
+
+
 
 ## Runtime modes
 
 Controlled by `VITE_USE_API` at build time (`src/config/api.js`):
 
-| Mode | `VITE_USE_API` | Persistence | Auth |
-|------|----------------|-------------|------|
-| **Local** (default dev) | unset / `false` | Browser `localStorage` | Plain-text credentials in `localStorage` |
-| **API** (production) | `true` | PostgreSQL via Fastify | HttpOnly access/refresh cookies; session metadata in `sessionStorage` |
+
+| Mode                    | `VITE_USE_API`  | Persistence            | Auth                                                                  |
+| ----------------------- | --------------- | ---------------------- | --------------------------------------------------------------------- |
+| **Local** (default dev) | unset / `false` | Browser `localStorage` | Plain-text credentials in `localStorage`                              |
+| **API** (production)    | `true`          | PostgreSQL via Fastify | HttpOnly access/refresh cookies; session metadata in `sessionStorage` |
+
 
 Both modes share the same React UI, logic engines, and question type registries. Store modules (`authStore`, `surveyLibrary`, `responseStore`, `dncStore`, `platformStore`) branch internally on `useApi`.
 
 Vite dev server proxies `/api` → `http://127.0.0.1:3003` (`vite.config.js`). Docker nginx does the same in production (`docker/nginx.conf`).
 
 ---
+
+
 
 ## Architecture
 
@@ -75,6 +83,10 @@ flowchart TB
   Preview --> ApiLayer
 ```
 
+
+
+
+
 ### Design principles
 
 1. **Single source of truth** — `questionHelpers.js` defines question types; builder and taker registries must stay in sync (`npm run check:registries`).
@@ -85,6 +97,8 @@ flowchart TB
 6. **Dual-mode stores** — persistence helpers abstract localStorage vs API so UI code stays mode-agnostic.
 
 ---
+
+
 
 ## Repository layout
 
@@ -124,27 +138,37 @@ survey-builder/
 └── vite.config.js          Aliases (@/, @shared/), API proxy, code splitting
 ```
 
+
+
 ### Path aliases
 
-| Alias | Resolves to |
-|-------|-------------|
-| `@/` | `src/` |
-| `@shared/` | `shared/` |
+
+| Alias      | Resolves to |
+| ---------- | ----------- |
+| `@/`       | `src/`      |
+| `@shared/` | `shared/`   |
+
 
 ---
 
+
+
 ## Frontend implementation
+
+
 
 ### Routing
 
 Hash-based SPA routing (`src/utils/appRoute.js`):
 
-| Route | View | Auth |
-|-------|------|------|
-| `#/` | Dashboard | Required |
-| `#/builder/:id` | Survey builder | Required |
+
+| Route           | View             | Auth     |
+| --------------- | ---------------- | -------- |
+| `#/`            | Dashboard        | Required |
+| `#/builder/:id` | Survey builder   | Required |
 | `#/preview/:id` | Internal preview | Required |
-| `#/take/:id` | Public taker | None |
+| `#/take/:id`    | Public taker     | None     |
+
 
 **White-label path URLs** also resolve on `surveys.{clientDomain}/{publicPath}` (no hash). Client domain is parsed from the hostname; the path slug maps to `survey.publicPath` in the database.
 
@@ -156,17 +180,21 @@ Views are lazy-loaded with route prefetching (`src/utils/routePrefetch.js`) to r
 - **Factories:** `store/factories.js` provides default shapes for questions, options, matrix rows/cols, groups, page breaks, etc.
 - **Autosave:** `useAutosave` debounces saves (400 ms default), diffs survey/items via JSON snapshot comparison, and serializes API PATCH requests through a promise chain to prevent revision conflicts.
 
+
+
 ### Logic engines
 
-| Module | Responsibility |
-|--------|----------------|
-| `visibilityEngine` | Builds respondent-facing page structure; resolves group/page-break/question visibility; computes per-page navigation lock seconds |
-| `conditionEngine` | AND/OR condition set evaluation against responses |
-| `terminationEngine` | Per-question screen-out rules and multi-condition termination blocks |
-| `branchEngine` | Skip-to-page rules on Next click (forward jumps only) |
-| `externalRedirectEngine` | Instant or page-level external URL redirects on rule match |
-| `piping` | Substitutes answer tokens into question text and dynamic option lists |
-| `answerValidation` | Required-field and format validation before page advance |
+
+| Module                   | Responsibility                                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `visibilityEngine`       | Builds respondent-facing page structure; resolves group/page-break/question visibility; computes per-page navigation lock seconds |
+| `conditionEngine`        | AND/OR condition set evaluation against responses                                                                                 |
+| `terminationEngine`      | Per-question screen-out rules and multi-condition termination blocks                                                              |
+| `branchEngine`           | Skip-to-page rules on Next click (forward jumps only)                                                                             |
+| `externalRedirectEngine` | Instant or page-level external URL redirects on rule match                                                                        |
+| `piping`                 | Substitutes answer tokens into question text and dynamic option lists                                                             |
+| `answerValidation`       | Required-field and format validation before page advance                                                                          |
+
 
 All engines receive the flat `items` array and current `responses` object. `buildVisiblePages()` must rerun whenever responses change because visibility can depend on prior answers.
 
@@ -193,7 +221,11 @@ Run `npm run check:registries` after adding or renaming types.
 
 ---
 
+
+
 ## Backend implementation
+
+
 
 ### Application bootstrap
 
@@ -205,6 +237,8 @@ Run `npm run check:registries` after adding or renaming types.
 4. Optionally runs platform list migration when `RUN_PLATFORM_LIST_MIGRATION=true` (development default; **disabled in production Docker**)
 5. Listens on `PORT` (default 3003)
 
+
+
 ### Authentication
 
 Global JWT hook on all `/api/*` routes except:
@@ -214,11 +248,15 @@ Global JWT hook on all `/api/*` routes except:
 
 After JWT verification, the handler loads the user from Postgres and attaches `request.auth` with the **live DB role**. Role or org changes take effect on the next request.
 
-| Role | Scope |
-|------|-------|
-| `admin` | Full org access — all surveys, users, platform settings, billing |
-| `editor` | Own surveys only (`createdById` filter via `surveyScope()`) |
-| `platform_owner` | Cross-org vendor console — subscriptions and invoices |
+
+| Role             | Scope                                                            |
+| ---------------- | ---------------------------------------------------------------- |
+| `admin`          | Full org access — all surveys, users, platform settings, billing |
+| `editor`         | Own surveys only (`createdById` filter via `surveyScope()`)      |
+| `platform_owner` | Cross-org vendor console — subscriptions and invoices            |
+
+
+
 
 ### Survey persistence
 
@@ -242,88 +280,112 @@ Public writes go through `POST /api/public/surveys/:id/responses` (no auth, live
 
 ### API surface
 
-| Prefix | Auth | Purpose |
-|--------|------|---------|
-| `/api/auth/*` | Mixed | Signup, login, session info |
-| `/api/dashboard` | JWT | Survey library list with stats |
-| `/api/surveys/:id` | JWT | CRUD survey definition |
-| `/api/surveys/:id/responses` | JWT | Response list, stats, upsert, delete |
-| `/api/surveys/:id/dnc` | JWT | DNC list management |
-| `/api/platform/*` | JWT (+ admin for writes) | Clients, topics, users |
-| `/api/billing/*` | JWT (admin) | Subscription and invoices |
-| `/api/vendor/*` | JWT (platform_owner) | Cross-org vendor console |
-| `/api/admin/*` | JWT (admin) | Employee stats |
-| `/api/public/*` | None | Live survey fetch, DNC list, response submit |
-| `/api/migrate/local` | JWT (dev only) | Import localStorage library into Postgres |
+
+| Prefix                       | Auth                     | Purpose                                      |
+| ---------------------------- | ------------------------ | -------------------------------------------- |
+| `/api/auth/*`                | Mixed                    | Signup, login, session info                  |
+| `/api/dashboard`             | JWT                      | Survey library list with stats               |
+| `/api/surveys/:id`           | JWT                      | CRUD survey definition                       |
+| `/api/surveys/:id/responses` | JWT                      | Response list, stats, upsert, delete         |
+| `/api/surveys/:id/dnc`       | JWT                      | DNC list management                          |
+| `/api/platform/*`            | JWT (+ admin for writes) | Clients, topics, users                       |
+| `/api/billing/*`             | JWT (admin)              | Subscription and invoices                    |
+| `/api/vendor/*`              | JWT (platform_owner)     | Cross-org vendor console                     |
+| `/api/admin/*`               | JWT (admin)              | Employee stats                               |
+| `/api/public/*`              | None                     | Live survey fetch, DNC list, response submit |
+| `/api/migrate/local`         | JWT (dev only)           | Import localStorage library into Postgres    |
+
 
 See [docs/CODE_REFERENCE.md](docs/CODE_REFERENCE.md) for frontend module-level detail.
 
 ---
 
+
+
 ## Database schema
 
 PostgreSQL via Prisma (`server/prisma/schema.prisma`). Multi-organization SaaS model:
 
-| Model | Purpose |
-|-------|---------|
-| `Organization` | Tenant boundary |
-| `User` | Org member with role (`admin`, `editor`, `platform_owner`) |
-| `Survey` | JSONB definition + items, revision, publicPath |
-| `Response` | JSONB payload per respondent session |
-| `Client`, `Topic` | Platform metadata lists per org |
-| `DncEntry` | Per-survey do-not-contact emails |
-| `Subscription`, `Invoice` | Billing |
+
+| Model                     | Purpose                                                    |
+| ------------------------- | ---------------------------------------------------------- |
+| `Organization`            | Tenant boundary                                            |
+| `User`                    | Org member with role (`admin`, `editor`, `platform_owner`) |
+| `Survey`                  | JSONB definition + items, revision, publicPath             |
+| `Response`                | JSONB payload per respondent session                       |
+| `Client`, `Topic`         | Platform metadata lists per org                            |
+| `DncEntry`                | Per-survey do-not-contact emails                           |
+| `Subscription`, `Invoice` | Billing                                                    |
+
 
 Indexes on `organizationId`, `surveyId`, and common query patterns (dashboard list, response stats).
 
 ---
 
+
+
 ## Shared code
 
 `shared/` is imported by both frontend (`@shared/`) and backend (relative path):
 
-| Module | Purpose |
-|--------|---------|
-| `surveyUrl.js` | Public path slug generation, white-label URL building, hostname parsing |
-| `matrixAnswer.js` | Matrix answer shape normalization (`{ [rowId]: columnId \| columnId[] }`) |
+
+| Module            | Purpose                                                                  |
+| ----------------- | ------------------------------------------------------------------------ |
+| `surveyUrl.js`    | Public path slug generation, white-label URL building, hostname parsing  |
+| `matrixAnswer.js` | Matrix answer shape normalization (`{ [rowId]: columnId | columnId[] }`) |
+
 
 Keeping URL and answer logic shared prevents client/server drift.
 
 ---
 
+
+
 ## Data storage by mode
+
+
 
 ### Local mode (`localStorage`)
 
-| Key area | Module |
-|----------|--------|
-| Survey definitions | `surveyLibrary.js` |
-| Responses | `responseStore.js` |
-| Admin users / session | `authStore.js` |
-| DNC list | `dncStore.js` |
+
+| Key area                | Module             |
+| ----------------------- | ------------------ |
+| Survey definitions      | `surveyLibrary.js` |
+| Responses               | `responseStore.js` |
+| Admin users / session   | `authStore.js`     |
+| DNC list                | `dncStore.js`      |
 | Platform clients/topics | `platformStore.js` |
+
 
 Data is per-browser, per-origin. Clearing site data removes everything.
 
 ### API mode (PostgreSQL)
 
-| Key area | Module / endpoint |
-|----------|-------------------|
-| Surveys | `api/surveys.js` → `PATCH /api/surveys/:id` |
-| Responses | `api/responses.js` → `/api/surveys/:id/responses` |
-| Auth | `authStore.js` → HttpOnly cookies + `sessionStorage` session metadata |
-| DNC | `dncStore.js` → `/api/surveys/:id/dnc` (in-memory cache on client) |
-| Platform lists | `api/platform.js` → `/api/platform/clients`, `/topics` |
+
+| Key area       | Module / endpoint                                                     |
+| -------------- | --------------------------------------------------------------------- |
+| Surveys        | `api/surveys.js` → `PATCH /api/surveys/:id`                           |
+| Responses      | `api/responses.js` → `/api/surveys/:id/responses`                     |
+| Auth           | `authStore.js` → HttpOnly cookies + `sessionStorage` session metadata |
+| DNC            | `dncStore.js` → `/api/surveys/:id/dnc` (in-memory cache on client)    |
+| Platform lists | `api/platform.js` → `/api/platform/clients`, `/topics`                |
+
 
 ---
 
+
+
 ## Getting started
+
+
 
 ### Prerequisites
 
 - **Node.js** 20+ (required for server)
 - **npm** 9+
 - **Docker** (optional — for Postgres and full-stack deploy)
+
+
 
 ### Install
 
@@ -333,6 +395,8 @@ cd survey-builder
 npm install
 npm install --prefix server
 ```
+
+
 
 ## Getting started
 
@@ -375,10 +439,12 @@ Vite on `:5173`, API on `:3003`, Postgres on `:5433`.
 
 On first API start **in development**, when `SEED_DEFAULT_ACCOUNTS` is enabled (default for `NODE_ENV=development`), the server seeds:
 
-| Account | Default credentials | Role |
-|---------|---------------------|------|
-| Org admin | `admin` / `admin123` | `admin` |
+
+| Account        | Default credentials    | Role             |
+| -------------- | ---------------------- | ---------------- |
+| Org admin      | `admin` / `admin123`   | `admin`          |
 | Platform owner | `vendor` / `vendor123` | `platform_owner` |
+
 
 Override platform owner via `PLATFORM_OWNER_USERNAME`, `PLATFORM_OWNER_EMAIL`, `PLATFORM_OWNER_PASSWORD`. **Change all defaults before any production deploy.**
 
@@ -410,57 +476,67 @@ Uses development bootstrap settings (default account seeding enabled, relaxed JW
 
 ---
 
+
+
 ## Environment variables
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DATABASE_URL` | — | PostgreSQL connection string |
-| `PORT` | `3003` | API listen port |
-| `NODE_ENV` | `development` | Enables dev-only routes (migrate), CORS |
-| `JWT_SECRET` | `dev-secret-change-me` (dev only) | JWT signing key — **required (32+ chars) in production** |
-| `ACCESS_TOKEN_EXPIRES_IN` | `15m` | Access-token and cookie lifetime |
-| `REFRESH_TOKEN_EXPIRES_IN` | `30d` | Rotating refresh-token lifetime |
-| `POSTGRES_PASSWORD` | `rescopesurveys` (dev only) | Postgres password — **required in production Compose** |
-| `SEED_DEFAULT_ACCOUNTS` | `true` in dev, `false` in prod | Bootstrap admin/vendor accounts (`server/src/lib/platform/seed.js`) |
-| `RUN_PLATFORM_LIST_MIGRATION` | `true` in dev, `false` in prod | Normalize legacy platform IDs on startup |
-| `REQUIRE_STRONG_JWT` | `true` in prod, `false` in dev override | Refuse weak or placeholder JWT secrets |
-| `RATE_LIMIT_RELAXED` | `true` in dev, `false` in prod | Multiply public/login rate limits for local testing |
-| `REDIS_URL` | unset in dev, `redis://redis:6379` in prod | Shared production rate-limit counter store |
-| `RATE_LIMIT_REDIS_REQUIRED` | `false` in dev, `true` in prod | Refuse production startup when the shared limiter is unavailable |
-| `INTERNAL_API_SECRET` | unset in dev, required in prod | Shared secret for Caddy on-demand TLS ask and internal routes |
-| `VITE_USE_API` | unset | Build-time flag: enable API persistence |
-| `PLATFORM_OWNER_*` | see seed.js | Platform owner bootstrap credentials (dev seed only) |
-| `WEB_HOST_PORT` | `8080` | Docker web container host port |
-| `POSTGRES_HOST_PORT` | `5433` | Docker Postgres host port |
+
+| Variable                      | Default                                    | Purpose                                                             |
+| ----------------------------- | ------------------------------------------ | ------------------------------------------------------------------- |
+| `DATABASE_URL`                | —                                          | PostgreSQL connection string                                        |
+| `PORT`                        | `3003`                                     | API listen port                                                     |
+| `NODE_ENV`                    | `development`                              | Enables dev-only routes (migrate), CORS                             |
+| `JWT_SECRET`                  | `dev-secret-change-me` (dev only)          | JWT signing key — **required (32+ chars) in production**            |
+| `ACCESS_TOKEN_EXPIRES_IN`     | `15m`                                      | Access-token and cookie lifetime                                    |
+| `REFRESH_TOKEN_EXPIRES_IN`    | `30d`                                      | Rotating refresh-token lifetime                                     |
+| `POSTGRES_PASSWORD`           | `rescopesurveys` (dev only)                | Postgres password — **required in production Compose**              |
+| `SEED_DEFAULT_ACCOUNTS`       | `true` in dev, `false` in prod             | Bootstrap admin/vendor accounts (`server/src/lib/platform/seed.js`) |
+| `RUN_PLATFORM_LIST_MIGRATION` | `true` in dev, `false` in prod             | Normalize legacy platform IDs on startup                            |
+| `REQUIRE_STRONG_JWT`          | `true` in prod, `false` in dev override    | Refuse weak or placeholder JWT secrets                              |
+| `RATE_LIMIT_RELAXED`          | `true` in dev, `false` in prod             | Multiply public/login rate limits for local testing                 |
+| `REDIS_URL`                   | unset in dev, `redis://redis:6379` in prod | Shared production rate-limit counter store                          |
+| `RATE_LIMIT_REDIS_REQUIRED`   | `false` in dev, `true` in prod             | Refuse production startup when the shared limiter is unavailable    |
+| `INTERNAL_API_SECRET`         | unset in dev, required in prod             | Shared secret for Caddy on-demand TLS ask and internal routes       |
+| `VITE_USE_API`                | unset                                      | Build-time flag: enable API persistence                             |
+| `PLATFORM_OWNER_*`            | see seed.js                                | Platform owner bootstrap credentials (dev seed only)                |
+| `WEB_HOST_PORT`               | `8080`                                     | Docker web container host port                                      |
+| `POSTGRES_HOST_PORT`          | `5433`                                     | Docker Postgres host port                                           |
+
 
 See [.env.example](.env.example) for a starter template.
 
 ---
 
+
+
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Vite dev server |
-| `npm run dev:server` | Fastify API with watch |
-| `npm run dev:all` | Vite + API concurrently |
-| `npm run dev:docker` | Postgres + API mode dev |
-| `npm run build` | Production frontend build |
-| `npm run check:registries` | Verify builder/taker registry parity |
-| `npm run db:migrate` | Apply Prisma migrations (production) |
-| `npm run db:migrate:dev` | Create/apply migrations (development) |
-| `npm run migrate:platform-lists` | Normalize legacy platform IDs (ops CLI; not run at prod startup) |
-| `test:phase2`–`test:phase4` | Frontend logic unit tests |
-| `test:rbac1`–`test:rbac6` | API integration tests (requires running server + Postgres) |
-| `test:config` | Dev/prod config flag and JWT validation tests |
-| `test:security` | Security integration tests (ownership, revision, XSS, rate limits) |
-| `test:track-a` | All frontend phase tests |
-| `test:load` | k6 load test vs Docker stack (2 CPU / 4 GB) |
-| `test:load:quick` | Short k6 smoke ramp |
+
+| Command                          | Description                                                        |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `npm run dev`                    | Vite dev server                                                    |
+| `npm run dev:server`             | Fastify API with watch                                             |
+| `npm run dev:all`                | Vite + API concurrently                                            |
+| `npm run dev:docker`             | Postgres + API mode dev                                            |
+| `npm run build`                  | Production frontend build                                          |
+| `npm run check:registries`       | Verify builder/taker registry parity                               |
+| `npm run db:migrate`             | Apply Prisma migrations (production)                               |
+| `npm run db:migrate:dev`         | Create/apply migrations (development)                              |
+| `npm run migrate:platform-lists` | Normalize legacy platform IDs (ops CLI; not run at prod startup)   |
+| `test:phase2`–`test:phase4`      | Frontend logic unit tests                                          |
+| `test:rbac1`–`test:rbac6`        | API integration tests (requires running server + Postgres)         |
+| `test:config`                    | Dev/prod config flag and JWT validation tests                      |
+| `test:security`                  | Security integration tests (ownership, revision, XSS, rate limits) |
+| `test:track-a`                   | All frontend phase tests                                           |
+| `test:load`                      | k6 load test vs Docker stack (2 CPU / 4 GB)                        |
+| `test:load:quick`                | Short k6 smoke ramp                                                |
+
 
 API integration tests expect a live server at `http://127.0.0.1:3003` with a migrated database.
 
 ---
+
+
 
 ## Testing
 
@@ -470,6 +546,8 @@ API integration tests expect a live server at `http://127.0.0.1:3003` with a mig
 - **Registry check** — `scripts/check/question-registries.js` ensures every question type has matching builder and taker handlers.
 - **Manual QA** — [docs/SMOKE_CHECKLIST.md](docs/SMOKE_CHECKLIST.md).
 - **Load tests** — `npm run test:load` (k6 + Docker, 2 CPU / 4 GB). Use `npm run test:load:quick` for a ~1 minute smoke ramp.
+
+
 
 ### Load testing (k6)
 
@@ -484,13 +562,15 @@ MAX_VUS=100 npm run test:load
 
 k6 simulates mixed traffic: public respondents (SPA shell, live survey fetch, DNC check, response submit) and authenticated authors (session, dashboard, builder GET, response stats). Concurrent users increase in stages until a threshold fails — that is the capacity ceiling on this hardware budget.
 
-| Signal | Threshold | Abort |
-|--------|-----------|--------|
-| Error rate | `< 1%` | yes (after 30s) |
-| Latency | p95 `< 800ms`, p99 `< 2s` | yes (after 30s) |
-| Survey submit | p95 `< 1.2s`, p99 `< 2.5s` | no |
-| CPU (api+web+postgres) | `< 95%` of 2 CPU | yes (after 45s) |
-| RAM (api+web+postgres) | `< 90%` of 4 GB | yes (after 45s) |
+
+| Signal                 | Threshold                  | Abort           |
+| ---------------------- | -------------------------- | --------------- |
+| Error rate             | `< 1%`                     | yes (after 30s) |
+| Latency                | p95 `< 800ms`, p99 `< 2s`  | yes (after 30s) |
+| Survey submit          | p95 `< 1.2s`, p99 `< 2.5s` | no              |
+| CPU (api+web+postgres) | `< 95%` of 2 CPU           | yes (after 45s) |
+| RAM (api+web+postgres) | `< 90%` of 4 GB            | yes (after 45s) |
+
 
 Request rate, p95/p99, error rate, CPU, and RAM are printed at the end and written to `k6/results/summary.json`. Public rate limits are relaxed on this overlay so the run measures application capacity, not the 429 limiter.
 
@@ -498,7 +578,11 @@ There is no E2E browser test suite or coverage reporting yet.
 
 ---
 
+
+
 ## Development guide
+
+
 
 ### Verify after changes
 
@@ -533,6 +617,8 @@ POST /api/migrate/local
 Frontend helper: `migrateLocalLibrary()` in `src/api/surveys.js`.
 
 ---
+
+
 
 ## Production deployment
 
@@ -571,12 +657,14 @@ IMAGE_TAG=v0.1.0 ./scripts/deploy/init-env.sh
 ./scripts/deploy/verify.sh
 ```
 
+
+
 ### Security considerations
 
-Production deployments must address:
+Production deployments must address the following:
 
-- **Set `JWT_SECRET`** to a strong random value (32+ characters) — production Compose requires it and the API refuses weak placeholders at startup.
-- **Set `POSTGRES_PASSWORD`** — production Compose interpolates it into Postgres and `DATABASE_URL`; do not ship the local default.
+- **Set** `JWT_SECRET` to a strong random value (32+ characters) — production Compose requires it and the API refuses weak placeholders at startup.
+- **Set** `POSTGRES_PASSWORD` — production Compose interpolates it into Postgres and `DATABASE_URL`; do not ship the local default.
 - **No default seeded accounts in production** — `docker-compose.prod.yml` sets `SEED_DEFAULT_ACCOUNTS=false`; create the first org via signup.
 - **HTTPS is required** — production Compose sets `COOKIE_SECURE=true`, so sessions only persist over TLS. Terminate TLS at the host Caddy ([docker/caddy/Caddyfile](docker/caddy/Caddyfile)).
 - **Do not publish 8080 publicly** — use `docker-compose.prod.yml`; ufw does not filter Docker-published ports.
@@ -586,35 +674,45 @@ Production deployments must address:
 
 ---
 
+
+
 ## Question types
 
-| Group | Types |
-|-------|-------|
-| **Choice** | Single select, multi select, dropdown, cascading dropdown, image choice (single/multi) |
-| **Text** | Open text, textbox list |
-| **Input** | Date |
-| **Grid** | Matrix grid, bipolar matrix |
-| **Scale** | NPS, star rating, semantic differential, slider |
-| **Advanced** | MaxDiff, card sort, constant sum, ranking |
+
+| Group        | Types                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------- |
+| **Choice**   | Single select, multi select, dropdown, cascading dropdown, image choice (single/multi) |
+| **Text**     | Open text, textbox list                                                                |
+| **Input**    | Date                                                                                   |
+| **Grid**     | Matrix grid, bipolar matrix                                                            |
+| **Scale**    | NPS, star rating, semantic differential, slider                                        |
+| **Advanced** | MaxDiff, card sort, constant sum, ranking                                              |
+
 
 ---
+
+
 
 ## Documentation
 
-| Document | Contents |
-|----------|----------|
-| [docs/README.md](docs/README.md) | Documentation index |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, infrastructure, tenancy, data model |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | Production deployment on your own VPS |
-| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Updates, backups, enterprise customers, troubleshooting |
-| [docs/DOCKER.md](docs/DOCKER.md) | Container images and distribution |
-| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Local development workflows |
-| [docs/CI.md](docs/CI.md) | GitHub Actions CI/CD |
-| [docs/CODE_REFERENCE.md](docs/CODE_REFERENCE.md) | Module exports, store actions, engine reference |
-| [docs/SMOKE_CHECKLIST.md](docs/SMOKE_CHECKLIST.md) | Manual QA checklist |
+
+| Document                                           | Contents                                                |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| [docs/README.md](docs/README.md)                   | Documentation index                                     |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)       | System design, infrastructure, tenancy, data model      |
+| [docs/DEPLOY.md](docs/DEPLOY.md)                   | Production deployment on your own VPS                   |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md)           | Updates, backups, enterprise customers, troubleshooting |
+| [docs/DOCKER.md](docs/DOCKER.md)                   | Container images and distribution                       |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)         | Local development workflows                             |
+| [docs/CI.md](docs/CI.md)                           | GitHub Actions CI/CD                                    |
+| [docs/CODE_REFERENCE.md](docs/CODE_REFERENCE.md)   | Module exports, store actions, engine reference         |
+| [docs/SMOKE_CHECKLIST.md](docs/SMOKE_CHECKLIST.md) | Manual QA checklist                                     |
+
 
 ---
 
+
+
 ## License
 
-Private project (`"private": true` in `package.json`). Contact the repository owner for licensing terms.
+Private project (`"private": true` in `package.json`). Contact the repository owner for licensing terms. 
