@@ -22,6 +22,7 @@ const PUBLIC_EXACT = new Set([
   // exchange is server-to-server with a client secret.
   '/api/oauth/authorize',
   '/api/oauth/token',
+  '/api/oauth/org-surveys',
 ])
 const PUBLIC_PREFIXES = ['/api/public/', '/api/internal/']
 

@@ -7,6 +7,9 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { ACCESS_COOKIE } from '../lib/auth/cookies.js'
 import { assertPanelAllowed, hasPanelGrant } from '../lib/auth/productAccess.js'
 import { hashToken } from '../lib/auth/refreshTokens.js'
+import { loadOrgPlanContext } from '../lib/branding/brandEnforcement.js'
+import { readEffectiveSurveyDomain } from '../lib/platform/orgSettings.js'
+import { listOrganizationSurveyLinks } from '../lib/platform/organizationSurveys.js'
 
 const CODE_TTL_MS = 60_000
 
@@ -183,5 +186,39 @@ export async function registerPanelOauthRoutes(app) {
       name: user.name || user.username || user.email,
       organizationId: user.organizationId,
     }
+  })
+
+  // Panel staff, including panel-only employees, pick any survey in their org.
+  app.get('/api/oauth/org-surveys', async (request, reply) => {
+    if (!oauthReady(app.config)) {
+      return reply.code(404).send({ error: 'Panel login is not configured.' })
+    }
+
+    const clientId = request.headers['x-panel-client-id']
+    const clientSecret = request.headers['x-panel-client-secret']
+    const expected = app.config.panelOauth
+    if (
+      clientId !== expected.clientId
+      || !clientSecret
+      || !sameSecret(clientSecret, expected.clientSecret)
+    ) {
+      return reply.code(401).send({ error: 'Unknown panel client.' })
+    }
+
+    const organizationId = String(request.query?.organizationId || '').trim()
+    if (!organizationId) {
+      return reply.code(400).send({ error: 'organizationId is required.' })
+    }
+
+    const { org, planId } = await loadOrgPlanContext(app.prisma, organizationId)
+    if (!org) return reply.code(404).send({ error: 'Organization not found.' })
+
+    const surveys = await listOrganizationSurveyLinks(app.prisma, organizationId, {
+      planId,
+      surveyDomain: readEffectiveSurveyDomain(org.settings, planId),
+      appUrl: app.config.appUrl,
+      isDev: app.config.isDev,
+    })
+    return { surveys }
   })
 }
