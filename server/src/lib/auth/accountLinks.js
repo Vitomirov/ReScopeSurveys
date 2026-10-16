@@ -12,7 +12,7 @@ import {
   issueAuthToken,
   voidPendingTokens,
 } from './authTokens.js'
-import { inviteEmail, resetPasswordEmail, verifyEmail } from '../email/authEmails.js'
+import { authLink, inviteEmail, resetPasswordEmail, verifyEmail } from '../email/authEmails.js'
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -73,26 +73,33 @@ export async function sendPasswordResetEmail(app, user) {
   )
 }
 
-export async function sendInviteEmail(app, { email, role, organization, invitedBy }) {
-  const { row } = await issueTokenAndSendMail(
+export async function sendInviteEmail(app, {
+  email, role, organization, invitedBy, canUseBuilder = true, canUsePanel = false,
+}) {
+  const { row, rawToken } = await issueTokenAndSendMail(
     app,
     {
       type: AUTH_TOKEN_TYPES.INVITE,
       email,
       role,
+      canUseBuilder,
+      canUsePanel,
       organizationId: organization.id,
       invitedById: invitedBy.id,
     },
-    (rawToken) => app.mailer.send({
+    (token) => app.mailer.send({
       to: email,
       ...inviteEmail({
         appUrl: app.config.appUrl,
-        token: rawToken,
+        token,
         organizationName: organization.name,
         inviterName: displayName(invitedBy),
         expiresInDays: AUTH_TOKEN_TTL_MS[AUTH_TOKEN_TYPES.INVITE] / (24 * HOUR_MS),
       }),
     }),
   )
-  return row
+  const acceptUrl = app.config.emailTransport === 'log' && !app.config.isDev
+    ? authLink(app.config.appUrl, 'accept-invite', rawToken)
+    : null
+  return { row, acceptUrl }
 }

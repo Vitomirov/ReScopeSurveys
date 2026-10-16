@@ -40,7 +40,9 @@ export async function voidPendingTokens(prisma, type, email) {
   })
 }
 
-export async function issueAuthToken(prisma, { type, email, userId, organizationId, role, invitedById }) {
+export async function issueAuthToken(prisma, {
+  type, email, userId, organizationId, role, invitedById, canUseBuilder, canUsePanel,
+}) {
   const ttlMs = AUTH_TOKEN_TTL_MS[type]
   if (!ttlMs) throw new Error(`Unknown auth token type: ${type}`)
 
@@ -54,6 +56,8 @@ export async function issueAuthToken(prisma, { type, email, userId, organization
       userId: userId ?? null,
       organizationId: organizationId ?? null,
       role: role ?? null,
+      canUseBuilder: canUseBuilder !== false,
+      canUsePanel: Boolean(canUsePanel),
       invitedById: invitedById ?? null,
       expiresAt: new Date(Date.now() + ttlMs),
     },
@@ -89,6 +93,14 @@ export async function listPendingInvites(prisma, organizationId) {
       expiresAt: { gt: new Date() },
     },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, email: true, role: true, expiresAt: true, createdAt: true },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      canUseBuilder: true,
+      canUsePanel: true,
+      expiresAt: true,
+      createdAt: true,
+    },
   })
 }

@@ -247,7 +247,7 @@ function StatsBar({ surveys }) {
 }
 
 // ─── Main Dashboard ────────────────────────────────────────────────────────
-export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session, onLogout, onSessionUpdate }) {
+export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session, onLogout, onSessionUpdate, panelOnly = false }) {
   const { toast } = useToast()
   const isAdmin = canSeeAllSurveys(session)
   const [tick, setTick]             = useState(0)
@@ -304,8 +304,9 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
   }, [toast])
 
   useEffect(() => {
+    if (panelOnly) return
     if (useApi) refresh({ allowMigrate: true })
-  }, [refresh])
+  }, [refresh, panelOnly])
 
   const surveys = useMemo(() => {
     const raw = useApi ? apiSurveys : loadLibrary()
@@ -482,6 +483,50 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
     deleteSurvey(deleteId)
     setDeleteId(null)
     refresh()
+  }
+
+  if (panelOnly) {
+    return (
+      <div className="h-screen bg-surface flex flex-col overflow-hidden">
+        <DashboardHeader
+          session={session}
+          onNewSurvey={() => {}}
+          onGoHome={() => {}}
+          onLogout={onLogout}
+          onOpenAccount={() => setShowAccount(true)}
+          onOpenTeamMembers={() => setShowTeamMembers(true)}
+          onOpenTeamActivity={() => setShowTeamActivity(true)}
+        />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-ink-800">Panel access</h1>
+            <p className="mt-2 text-sm text-ink-500">
+              This account opens the panel. Survey editing is turned off.
+              Use Panel in the header to continue.
+            </p>
+          </div>
+        </main>
+        {showAccount && session && (
+          <Suspense fallback={null}>
+            <AccountSettingsModal
+              session={session}
+              onSessionUpdate={onSessionUpdate}
+              onClose={() => setShowAccount(false)}
+            />
+          </Suspense>
+        )}
+        {showTeamMembers && canManagePlatform(session) && (
+          <Suspense fallback={null}>
+            <TeamMembersModal session={session} onClose={() => setShowTeamMembers(false)} />
+          </Suspense>
+        )}
+        {showTeamActivity && canManagePlatform(session) && (
+          <Suspense fallback={null}>
+            <TeamPanel onClose={() => setShowTeamActivity(false)} />
+          </Suspense>
+        )}
+      </div>
+    )
   }
 
   return (

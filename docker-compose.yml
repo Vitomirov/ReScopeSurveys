@@ -60,10 +60,15 @@ services:
       REFRESH_TOKEN_EXPIRES_IN: '30d'
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       AUTH_ALLOW_BEARER: ${AUTH_ALLOW_BEARER:-true}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      # This stack is opened at http://localhost:8080. .env CORS_ORIGIN is the Vite
+      # dev server (5173) and must not be the only origin allowed here.
+      CORS_ORIGIN: http://localhost:8080,${CORS_ORIGIN:-http://localhost:5173}
       # Partner demo: account emails (invites, resets) are printed to `docker compose logs api`.
       EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-log}
-      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_URL: http://localhost:8080
+      PANEL_OAUTH_CLIENT_ID: ${PANEL_OAUTH_CLIENT_ID:-rescope-panel-local}
+      PANEL_OAUTH_CLIENT_SECRET: ${PANEL_OAUTH_CLIENT_SECRET:-panel-local-oauth-secret-not-for-production-use}
+      PANEL_OAUTH_REDIRECT_URI: ${PANEL_OAUTH_REDIRECT_URI:-http://localhost:3010/api/auth/builder/callback}
       SEED_DEFAULT_ACCOUNTS: ${SEED_DEFAULT_ACCOUNTS:-true}
       RUN_PLATFORM_LIST_MIGRATION: ${RUN_PLATFORM_LIST_MIGRATION:-true}
       REQUIRE_STRONG_JWT: ${REQUIRE_STRONG_JWT:-false}
@@ -78,6 +83,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_USE_API: 'true'
+        VITE_PANEL_URL: ${VITE_PANEL_URL:-http://localhost:3010}
     restart: unless-stopped
     depends_on:
       api:

@@ -18,6 +18,10 @@ const PUBLIC_EXACT = new Set([
   '/api/auth/password/forgot',
   '/api/auth/password/reset',
   '/api/auth/email/verify',
+  // Panel login: the browser may not have a session yet, and the token
+  // exchange is server-to-server with a client secret.
+  '/api/oauth/authorize',
+  '/api/oauth/token',
 ])
 const PUBLIC_PREFIXES = ['/api/public/', '/api/internal/']
 
@@ -102,6 +106,8 @@ export async function registerAuth(app, { jwtSecret, jwtExpiresIn, authAllowBear
             email: true,
             name: true,
             tokenVersion: true,
+            canUseBuilder: true,
+            canUsePanel: true,
             organization: { select: { name: true } },
           },
         })
@@ -132,6 +138,8 @@ export async function registerAuth(app, { jwtSecret, jwtExpiresIn, authAllowBear
       userId: user.id,
       organizationId: user.organizationId,
       role: user.role,
+      canUseBuilder: user.canUseBuilder !== false,
+      canUsePanel: Boolean(user.canUsePanel),
       user,
     }
     request.organizationId = user.organizationId

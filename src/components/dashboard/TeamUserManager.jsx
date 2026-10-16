@@ -5,6 +5,7 @@ import { updateUserApi, deleteUserApi } from '@/api/platform/platform'
 import { createInvite, fetchInvites, resendInvite, revokeInvite } from '@/api/platform/invites'
 import { addUser, updateUser, deleteUser } from '@/utils/data/authStore'
 import { roleLabel } from '@/utils/platform/permissions'
+import { productGrantLabel } from '@/utils/panelLink'
 import { AUTH_TEAM, AUTH_PROFILE } from '@/constants/authCopy'
 import { UserAvatar } from './UserAvatar.jsx'
 
@@ -15,7 +16,7 @@ function generatePassword() {
   return out
 }
 
-const EMPTY_FORM = { email: '', username: '', password: '', name: '', role: 'editor' }
+const EMPTY_FORM = { email: '', username: '', password: '', name: '', role: 'editor', productGrant: 'builder' }
 
 /**
  * API mode: admins invite by email and members set their own password via the emailed link.
@@ -86,12 +87,16 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
     if (useApi) {
       try {
         if (editId) {
-          const patch = { name: form.name.trim(), role: form.role }
+          const patch = { name: form.name.trim(), role: form.role, productGrant: form.productGrant }
           if (form.username.trim()) patch.username = form.username.trim()
           const data = await updateUserApi(editId, patch)
           setUsers(prev => prev.map(u => u.id === editId ? data.user : u))
         } else {
-          const invite = await createInvite({ email: form.email.trim(), role: form.role })
+          const invite = await createInvite({
+            email: form.email.trim(),
+            role: form.role,
+            productGrant: form.productGrant,
+          })
           setInvites(prev => [invite, ...prev.filter(i => i.email !== invite.email)])
           setNotice(AUTH_TEAM.inviteSent)
         }
@@ -126,7 +131,14 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
 
   const startEdit = (u) => {
     setEditId(u.id)
-    setForm({ email: u.email || '', username: u.username || '', password: '', name: u.name, role: u.role })
+    setForm({
+      email: u.email || '',
+      username: u.username || '',
+      password: '',
+      name: u.name,
+      role: u.role,
+      productGrant: u.productGrant || 'builder',
+    })
     setError('')
     setNotice('')
     setShowForm(true)
@@ -253,6 +265,11 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
                   }`}>
                     {roleLabel(u.role)}
                   </span>
+                  {useApi && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded text-ink-500 bg-ink-100">
+                      {productGrantLabel(u.productGrant)}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-ink-400 truncate">
                   {u.email}{u.username ? ` · @${u.username}` : ''}
@@ -305,6 +322,11 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
                   <p className="text-xs text-ink-400">
                     Invited · expires {new Date(invite.expiresAt).toLocaleDateString()}
                   </p>
+                  {invite.acceptUrl && (
+                    <a href={invite.acceptUrl} className="text-xs text-brand-600 break-all hover:underline">
+                      Open this link to choose a password
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <button
@@ -377,6 +399,20 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
                 </select>
               </div>
             )}
+            {useApi && (
+              <div>
+                <label className="text-xs text-ink-500 mb-1 block">Access</label>
+                <select
+                  value={form.productGrant}
+                  onChange={e => setForm(f => ({ ...f, productGrant: e.target.value }))}
+                  className="input-base py-1.5 text-sm"
+                >
+                  <option value="builder">Builder</option>
+                  <option value="panel">Panel</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {editId && (
@@ -446,6 +482,20 @@ export function TeamUserManager({ users, setUsers, session, seatUsage, hideHeade
                   <option value="editor">User</option>
                 </select>
               </div>
+              {useApi && (
+                <div>
+                  <label className="text-xs text-ink-500 mb-1 block">Access</label>
+                  <select
+                    value={form.productGrant}
+                    onChange={e => setForm(f => ({ ...f, productGrant: e.target.value }))}
+                    className="input-base py-1.5 text-sm"
+                  >
+                    <option value="builder">Builder</option>
+                    <option value="panel">Panel</option>
+                    <option value="both">Both</option>
+                  </select>
+                </div>
+              )}
             </div>
           )}
 

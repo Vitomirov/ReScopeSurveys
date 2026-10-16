@@ -14,6 +14,7 @@ import { registerAuth } from './plugins/auth.js'
 import { registerMailer } from './plugins/mailer.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerInviteRoutes } from './routes/invites.js'
+import { registerPanelOauthRoutes } from './routes/panelOauth.js'
 import { registerPasswordResetRoutes } from './routes/passwordReset.js'
 import { registerEmailVerificationRoutes } from './routes/emailVerification.js'
 import { registerDevMailboxRoutes } from './routes/devMailbox.js'
@@ -87,6 +88,7 @@ export async function buildApp() {
 
   await registerAuthRoutes(app)
   await registerInviteRoutes(app)
+  await registerPanelOauthRoutes(app)
   await registerPasswordResetRoutes(app)
   await registerEmailVerificationRoutes(app)
   await registerPublicRoutes(app)

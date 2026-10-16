@@ -242,13 +242,14 @@ Plan assignment:
 Production stack includes:
 
 - HttpOnly cookie sessions with rotating refresh tokens
+- Optional TOTP MFA for enrolled `admin` and `platform_owner` accounts
 - CSRF protection on cookie-authenticated mutations
 - Redis-backed distributed rate limiting
 - CORS allowlist (never `*` in production)
 - Loopback-only web container bind
 - CSP and embed framing controls
 
-Full audit and roadmap: [SECURITY_AUDIT.md](SECURITY_AUDIT.md).
+Security layers: [SECURITY_CONTROLS.md](SECURITY_CONTROLS.md). Planned work by usage stage: [SECURITY_ROADMAP.md](SECURITY_ROADMAP.md).
 
 ---
 

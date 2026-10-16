@@ -14,6 +14,7 @@ import { AppLogo } from '@/components/shared/branding/AppLogo.jsx'
 import { HeaderLogoutButton } from '@/components/shared/layout/HeaderLogoutButton.jsx'
 import { AUTH_PROFILE, AUTH_TEAM } from '@/constants/authCopy'
 import { roleLabel, canManagePlatform } from '@/utils/platform/permissions'
+import { panelStartUrl } from '@/utils/panelLink'
 import { prefetchBuilder } from '@/utils/routing/routePrefetch'
 import { UserAvatar } from './UserAvatar.jsx'
 import { NotificationBell } from './NotificationBell.jsx'
@@ -125,18 +126,28 @@ export function DashboardHeader({
             <AppLogo onClick={onGoHome} size="md" className="shrink-0 min-w-0" />
 
             <div className={APP_HEADER_ACTIONS}>
-              <button
-                type="button"
-                onClick={onNewSurvey}
-                onMouseEnter={prefetchBuilder}
-                onFocus={prefetchBuilder}
-                aria-label="New survey"
-                className="btn-primary inline-flex items-center gap-1.5 h-9 sm:h-10 rounded-xl px-2.5 sm:px-4 text-sm font-semibold shrink-0 shadow-sm shadow-brand-600/10 hover:shadow-md hover:shadow-brand-600/15"
-              >
-                <Plus size={16} className="shrink-0" aria-hidden />
-                <span className="sm:hidden">New</span>
-                <span className="hidden sm:inline">New survey</span>
-              </button>
+              {session?.canUseBuilder !== false && (
+                <button
+                  type="button"
+                  onClick={onNewSurvey}
+                  onMouseEnter={prefetchBuilder}
+                  onFocus={prefetchBuilder}
+                  aria-label="New survey"
+                  className="btn-primary inline-flex items-center gap-1.5 h-9 sm:h-10 rounded-xl px-2.5 sm:px-4 text-sm font-semibold shrink-0 shadow-sm shadow-brand-600/10 hover:shadow-md hover:shadow-brand-600/15"
+                >
+                  <Plus size={16} className="shrink-0" aria-hidden />
+                  <span className="sm:hidden">New</span>
+                  <span className="hidden sm:inline">New survey</span>
+                </button>
+              )}
+              {session?.panelEnabled && panelStartUrl() && (
+                <a
+                  href={panelStartUrl()}
+                  className="inline-flex items-center h-9 sm:h-10 rounded-xl px-2.5 sm:px-4 text-sm font-semibold border border-ink-200 text-ink-700 hover:bg-ink-50"
+                >
+                  Panel
+                </a>
+              )}
 
               <div className={APP_HEADER_USER_CLUSTER}>
                 {session && (

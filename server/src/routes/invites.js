@@ -24,16 +24,19 @@ import {
   assertEmailAvailable,
   deriveUsernameForOrg,
 } from '../lib/auth/userIdentity.js'
+import { grantFromFlags, resolveProductGrant } from '../lib/auth/productAccess.js'
 
 const adminOnly = requireRole(ROLES.ADMIN)
 
-function inviteResponse(row) {
+function inviteResponse(row, acceptUrl = null) {
   return {
     id:        row.id,
     email:     row.email,
     role:      row.role,
+    productGrant: grantFromFlags(row.canUseBuilder !== false, row.canUsePanel),
     expiresAt: row.expiresAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
+    ...(acceptUrl ? { acceptUrl } : {}),
   }
 }
 
@@ -66,10 +69,12 @@ export async function registerInviteRoutes(app) {
     })
     if (limited) return limited
 
-    const { email, role = ROLES.EDITOR } = request.body ?? {}
+    const { email, role = ROLES.EDITOR, productGrant = 'builder' } = request.body ?? {}
     if (!ROLE_VALUES.has(role) || role === ROLES.PLATFORM_OWNER) {
       return reply.code(400).send({ error: 'Invalid role.' })
     }
+    const access = await resolveProductGrant(app.prisma, request.organizationId, productGrant)
+    if (!access.ok) return reply.code(403).send({ error: access.error, code: access.code })
     const formatCheck = validateEmailFormat(email)
     if (!formatCheck.ok) return reply.code(400).send({ error: formatCheck.error })
 
@@ -89,13 +94,15 @@ export async function registerInviteRoutes(app) {
       return reply.code(403).send({ error: seatCheck.error, code: seatCheck.code })
     }
 
-    const row = await sendInviteEmail(app, {
+    const sent = await sendInviteEmail(app, {
       email: emailCheck.email,
       role,
+      canUseBuilder: access.canUseBuilder,
+      canUsePanel: access.canUsePanel,
       organization: inviter.organization,
       invitedBy: inviter,
     })
-    return reply.code(201).send({ invite: inviteResponse(row) })
+    return reply.code(201).send({ invite: inviteResponse(sent.row, sent.acceptUrl) })
   })
 
   app.post('/api/platform/invites/:id/resend', { preHandler: adminOnly }, async (request, reply) => {
@@ -113,13 +120,15 @@ export async function registerInviteRoutes(app) {
 
     const inviter = await loadInviter(app, request)
     // Re-issuing voids the previous link and restarts the expiry window.
-    const row = await sendInviteEmail(app, {
+    const sent = await sendInviteEmail(app, {
       email: existing.email,
       role: existing.role,
+      canUseBuilder: existing.canUseBuilder !== false,
+      canUsePanel: Boolean(existing.canUsePanel),
       organization: inviter.organization,
       invitedBy: inviter,
     })
-    return { invite: inviteResponse(row) }
+    return { invite: inviteResponse(sent.row, sent.acceptUrl) }
   })
 
   app.delete('/api/platform/invites/:id', { preHandler: adminOnly }, async (request, reply) => {
@@ -147,7 +156,14 @@ export async function registerInviteRoutes(app) {
         select: { name: true },
       })
       if (!org) throw new AuthTokenError()
-      return { invite: { email: row.email, role: row.role, organizationName: org.name } }
+      return {
+        invite: {
+          email: row.email,
+          role: row.role,
+          productGrant: grantFromFlags(row.canUseBuilder !== false, row.canUsePanel),
+          organizationName: org.name,
+        },
+      }
     } catch (err) {
       return invalidLink(reply, err)
     }
@@ -196,6 +212,8 @@ export async function registerInviteRoutes(app) {
             passwordHash,
             name:            name.trim(),
             role:            invite.role || ROLES.EDITOR,
+            canUseBuilder:   invite.canUseBuilder !== false,
+            canUsePanel:     Boolean(invite.canUsePanel),
             // Reaching this link proves control of the invited mailbox.
             emailVerifiedAt: new Date(),
           },

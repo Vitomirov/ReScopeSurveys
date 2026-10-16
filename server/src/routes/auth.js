@@ -25,8 +25,14 @@ import {
 } from '../lib/auth/userIdentity.js'
 import { sendVerificationEmail } from '../lib/auth/accountLinks.js'
 import { catalogPlan } from '../../../shared/planCatalog.js'
+import { loadProductSession } from '../lib/auth/productAccess.js'
 
 const MAX_AVATAR_BYTES = 512 * 1024
+
+/** Local Docker logs mail and is not the dev server, so there is no inbox or mailbox page. */
+function localMailHasNoInbox(app) {
+  return app.config.emailTransport === 'log' && !app.config.isDev
+}
 
 function validateAvatarUrl(value) {
   if (value === null || value === '') return { ok: true, avatarUrl: null }
@@ -92,6 +98,8 @@ export async function registerAuthRoutes(app) {
           passwordHash,
           name:           name.trim(),
           role:           'admin',
+          // Docker local logs mail and has no inbox. Dev still requires the verification link.
+          emailVerifiedAt: localMailHasNoInbox(app) ? new Date() : null,
         },
       })
       return { org, user }
@@ -99,7 +107,9 @@ export async function registerAuthRoutes(app) {
 
     const session = await issueAuthSession(app, reply, user, org.name)
     // Email delivery must never block or fail account creation.
-    sendVerificationEmail(app, user).catch(err => request.log.error(err, 'verification email failed'))
+    if (!user.emailVerifiedAt) {
+      sendVerificationEmail(app, user).catch(err => request.log.error(err, 'verification email failed'))
+    }
     return reply.code(201).send({ session })
   })
 
@@ -176,7 +186,8 @@ export async function registerAuthRoutes(app) {
           code: 'SESSION_INVALID',
         })
       }
-      const session = buildSession(user, user.organization?.name)
+      const product = await loadProductSession(app.prisma, user)
+      const session = buildSession(user, user.organization?.name, product)
       setAuthCookies(reply, {
         accessToken: signToken(app, session, user.tokenVersion ?? 0),
         refreshToken: rotated.rawToken,
@@ -197,7 +208,13 @@ export async function registerAuthRoutes(app) {
     const { user, organizationId, role, userId } = request.auth
     const extra = await app.prisma.user.findUnique({
       where: { id: userId },
-      select: { avatarUrl: true, emailVerifiedAt: true },
+      select: { avatarUrl: true, emailVerifiedAt: true, canUseBuilder: true, canUsePanel: true, role: true, organizationId: true },
+    })
+    const product = await loadProductSession(app.prisma, {
+      role: extra?.role ?? role,
+      canUseBuilder: extra?.canUseBuilder,
+      canUsePanel: extra?.canUsePanel,
+      organizationId: extra?.organizationId ?? organizationId,
     })
     const session = {
       userId,
@@ -209,6 +226,9 @@ export async function registerAuthRoutes(app) {
       email:            user.email,
       role,
       emailVerified:    Boolean(extra?.emailVerifiedAt),
+      canUseBuilder:    product.canUseBuilder,
+      canUsePanel:      product.canUsePanel,
+      panelEnabled:     product.panelEnabled,
     }
     return { session }
   })

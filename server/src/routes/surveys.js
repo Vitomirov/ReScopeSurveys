@@ -31,6 +31,16 @@ async function loadPlatformLists(prisma, organizationId) {
   return { clients, topics, surveyTypes }
 }
 
+function denyWithoutBuilder(request, reply) {
+  if (request.auth?.canUseBuilder === false) {
+    return reply.code(403).send({
+      error: 'This account cannot edit surveys.',
+      code: 'BUILDER_DISABLED',
+    })
+  }
+  return null
+}
+
 export async function registerSurveyRoutes(app) {
   app.get('/api/surveys/:id', async (request, reply) => {
     const row = await app.prisma.survey.findFirst({
@@ -48,6 +58,9 @@ export async function registerSurveyRoutes(app) {
   })
 
   app.patch('/api/surveys/:id', async (request, reply) => {
+    const denied = denyWithoutBuilder(request, reply)
+    if (denied) return denied
+
     const { id } = request.params
     const { survey, items, revision } = request.body ?? {}
 
@@ -199,6 +212,9 @@ export async function registerSurveyRoutes(app) {
   })
 
   app.delete('/api/surveys/:id', async (request, reply) => {
+    const denied = denyWithoutBuilder(request, reply)
+    if (denied) return denied
+
     const existing = await findAccessibleSurvey(
       app.prisma, request, request.params.id, reply, { id: true }
     )

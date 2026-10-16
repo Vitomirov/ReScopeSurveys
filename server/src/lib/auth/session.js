@@ -6,8 +6,9 @@
  */
 import { setAuthCookies } from './cookies.js'
 import { createRefreshToken } from './refreshTokens.js'
+import { loadProductSession } from './productAccess.js'
 
-export function buildSession(user, organizationName = null) {
+export function buildSession(user, organizationName = null, product = {}) {
   return {
     userId:           user.id,
     organizationId:   user.organizationId,
@@ -17,6 +18,9 @@ export function buildSession(user, organizationName = null) {
     avatarUrl:        user.avatarUrl || null,
     role:             user.role,
     emailVerified:    Boolean(user.emailVerifiedAt),
+    canUseBuilder:    product.canUseBuilder !== false,
+    canUsePanel:      Boolean(product.canUsePanel),
+    panelEnabled:     Boolean(product.panelEnabled),
     loginAt:          new Date().toISOString(),
   }
 }
@@ -35,7 +39,8 @@ export function signToken(app, session, tokenVersion = 0) {
 }
 
 export async function issueAuthSession(app, reply, user, organizationName = null) {
-  const session = buildSession(user, organizationName)
+  const product = await loadProductSession(app.prisma, user)
+  const session = buildSession(user, organizationName, product)
   const accessToken = signToken(app, session, user.tokenVersion ?? 0)
   const { rawToken } = await createRefreshToken(app.prisma, user.id)
   setAuthCookies(reply, { accessToken, refreshToken: rawToken })

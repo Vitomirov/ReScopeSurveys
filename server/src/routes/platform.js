@@ -14,6 +14,7 @@ import {
   assertUsernameAvailableInOrg,
   deriveUsernameForOrg,
 } from '../lib/auth/userIdentity.js'
+import { grantFromFlags, hasPanelGrant, resolveProductGrant } from '../lib/auth/productAccess.js'
 
 const newId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 const adminOnly = requireRole(ROLES.ADMIN)
@@ -26,6 +27,7 @@ function userResponse(user) {
     name:      user.name || user.username || user.email,
     avatarUrl: user.avatarUrl || null,
     role:      user.role,
+    productGrant: grantFromFlags(user.canUseBuilder !== false, hasPanelGrant(user)),
     createdAt: user.createdAt?.toISOString?.() ?? null,
   }
 }
@@ -194,7 +196,7 @@ export async function registerPlatformRoutes(app) {
   })
 
   app.post('/api/platform/users', { preHandler: adminOnly }, async (request, reply) => {
-    const { email, password, name, role = ROLES.EDITOR } = request.body ?? {}
+    const { email, password, name, role = ROLES.EDITOR, productGrant = 'builder' } = request.body ?? {}
     if (!email?.trim() || !name?.trim() || !password) {
       return reply.code(400).send({ error: 'Email, name, and password are required.' })
     }
@@ -204,6 +206,8 @@ export async function registerPlatformRoutes(app) {
     if (!ROLE_VALUES.has(role) || role === ROLES.PLATFORM_OWNER) {
       return reply.code(400).send({ error: 'Invalid role.' })
     }
+    const access = await resolveProductGrant(app.prisma, request.organizationId, productGrant)
+    if (!access.ok) return reply.code(403).send({ error: access.error, code: access.code })
 
     const formatCheck = validateEmailFormat(email)
     if (!formatCheck.ok) return reply.code(400).send({ error: formatCheck.error })
@@ -226,6 +230,8 @@ export async function registerPlatformRoutes(app) {
         passwordHash:   await hashPassword(password),
         name:           name.trim(),
         role,
+        canUseBuilder:  access.canUseBuilder,
+        canUsePanel:    access.canUsePanel,
       },
     })
     return {
@@ -235,7 +241,7 @@ export async function registerPlatformRoutes(app) {
   })
 
   app.patch('/api/platform/users/:id', { preHandler: adminOnly }, async (request, reply) => {
-    const { name, username, password, role, avatarUrl } = request.body ?? {}
+    const { name, username, password, role, avatarUrl, productGrant } = request.body ?? {}
     const existing = await app.prisma.user.findFirst({
       where: { id: request.params.id, organizationId: request.organizationId },
     })
@@ -283,6 +289,13 @@ export async function registerPlatformRoutes(app) {
       } else {
         return reply.code(400).send({ error: 'Invalid profile image.' })
       }
+    }
+
+    if (productGrant !== undefined) {
+      const access = await resolveProductGrant(app.prisma, request.organizationId, productGrant)
+      if (!access.ok) return reply.code(403).send({ error: access.error, code: access.code })
+      data.canUseBuilder = access.canUseBuilder
+      data.canUsePanel = access.canUsePanel
     }
 
     if (password) {

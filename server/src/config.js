@@ -232,5 +232,10 @@ export function loadConfig(env = process.env) {
     rateLimitRedisRequired,
     redisUrl,
     internalApiSecret,
+    panelOauth: {
+      clientId: String(env.PANEL_OAUTH_CLIENT_ID || '').trim(),
+      clientSecret: String(env.PANEL_OAUTH_CLIENT_SECRET || '').trim(),
+      redirectUri: String(env.PANEL_OAUTH_REDIRECT_URI || '').trim(),
+    },
   }
 }

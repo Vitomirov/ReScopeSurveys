@@ -5,8 +5,11 @@ export async function fetchInvites() {
   return data.invites
 }
 
-export async function createInvite({ email, role }) {
-  const data = await apiFetch('/api/platform/invites', { method: 'POST', body: { email, role } })
+export async function createInvite({ email, role, productGrant }) {
+  const data = await apiFetch('/api/platform/invites', {
+    method: 'POST',
+    body: { email, role, productGrant },
+  })
   return data.invite
 }
 

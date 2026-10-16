@@ -255,6 +255,22 @@ export default function App() {
     )
   }
 
+  if (session?.canUseBuilder === false && !ownerSession) {
+    return (
+      <Page title="Panel access" label="Loading account…" onReset={back}>
+        <Dashboard
+          session={session}
+          onSessionUpdate={setSession}
+          onLogout={() => { logout(); setSession(null); navMarketingHome() }}
+          onNewSurvey={() => {}}
+          onOpenSurvey={() => {}}
+          onPreviewSurvey={() => {}}
+          panelOnly
+        />
+      </Page>
+    )
+  }
+
   if (ownerSession) {
     return (
       <Page title="Platform console error" label="Loading platform console…" onReset={back}>
