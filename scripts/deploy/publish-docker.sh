@@ -21,7 +21,10 @@ echo "Building ${API_IMAGE}..."
 docker build -t "${API_IMAGE}" -f server/Dockerfile .
 
 echo "Building ${WEB_IMAGE}..."
-docker build -t "${WEB_IMAGE}" --build-arg VITE_USE_API=true .
+docker build -t "${WEB_IMAGE}" \
+  --build-arg VITE_USE_API=true \
+  --build-arg VITE_PANEL_URL="${VITE_PANEL_URL:-https://panel.rescopesurveys.com}" \
+  .
 
 if [[ "${TAG}" == "latest" ]]; then
   docker tag "${API_IMAGE}" "${USER}/rescopesurveys-api:latest"

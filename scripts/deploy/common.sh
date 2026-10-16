@@ -11,6 +11,7 @@ PRODUCTION_DOMAINS=(
   rescopesurveys.com
   www.rescopesurveys.com
   surveys.rescopesurveys.com
+  panel.rescopesurveys.com
 )
 
 DEFAULT_DOCKERHUB_USER=vitomirov
@@ -91,7 +92,7 @@ web_health_url() {
 }
 
 validate_production_env() {
-  local jwt_secret postgres_password cors_origin smtp_url
+  local jwt_secret postgres_password cors_origin smtp_url panel_secret panel_redirect
 
   [[ -f "$ENV_FILE" ]] || fail ".env not found in $ROOT — run: ./scripts/deploy/init-env.sh"
 
@@ -127,6 +128,17 @@ validate_production_env() {
     smtp://*|smtps://*) ;;
     *) fail "SMTP_URL is missing or not an smtp:// / smtps:// URL in .env — the API refuses to start in production without outbound email." ;;
   esac
+
+  panel_secret="$(env_value PANEL_OAUTH_CLIENT_SECRET)"
+  panel_redirect="$(env_value PANEL_OAUTH_REDIRECT_URI)"
+  [[ -n "$panel_secret" ]] || fail "PANEL_OAUTH_CLIENT_SECRET is missing in .env"
+  case "$panel_secret" in
+    *not-for-production*|*change-me*|*example*)
+      fail "PANEL_OAUTH_CLIENT_SECRET is still a local demo value"
+      ;;
+  esac
+  [[ "$panel_redirect" == "https://panel.rescopesurveys.com/api/auth/builder/callback" ]] \
+    || fail "PANEL_OAUTH_REDIRECT_URI must be https://panel.rescopesurveys.com/api/auth/builder/callback"
 }
 
 version_gte() {

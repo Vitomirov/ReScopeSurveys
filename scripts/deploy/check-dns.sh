@@ -63,7 +63,7 @@ done
 
 echo ""
 if [[ "$failed" -ne 0 ]]; then
-  fail "DNS is not ready. Point A records for app, apex, www, and surveys at $EXPECTED_IP, wait for TTL, then re-run. Do not reload Caddy until this passes — Let's Encrypt will fail."
+  fail "DNS is not ready. Point A records for app, apex, www, surveys, and panel at $EXPECTED_IP, wait for TTL, then re-run. Do not reload Caddy until this passes — Let's Encrypt will fail."
 fi
 
 echo "DNS OK — all production names resolve to $EXPECTED_IP."

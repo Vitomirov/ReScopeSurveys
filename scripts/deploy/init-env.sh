@@ -44,6 +44,7 @@ fi
 
 postgres_password="$(openssl rand -base64 24 | tr -d '/+=')"
 jwt_secret="$(openssl rand -base64 48 | tr -d '\n')"
+panel_oauth_secret="$(openssl rand -base64 32 | tr -d '/+=\n')"
 dockerhub_user="${DOCKERHUB_USER:-$DEFAULT_DOCKERHUB_USER}"
 image_tag="${IMAGE_TAG:-latest}"
 web_host_port="${WEB_HOST_PORT:-$DEFAULT_WEB_HOST_PORT}"
@@ -74,6 +75,10 @@ CORS_ORIGIN=https://app.rescopesurveys.com,https://rescopesurveys.com,https://ww
 SMTP_URL=${smtp_url}
 EMAIL_FROM=Rescope Surveys <no-reply@rescopesurveys.com>
 APP_URL=https://app.rescopesurveys.com
+
+PANEL_OAUTH_CLIENT_ID=rescope-panel
+PANEL_OAUTH_CLIENT_SECRET=${panel_oauth_secret}
+PANEL_OAUTH_REDIRECT_URI=https://panel.rescopesurveys.com/api/auth/builder/callback
 
 DOCKERHUB_USER=${dockerhub_user}
 IMAGE_TAG=${image_tag}
