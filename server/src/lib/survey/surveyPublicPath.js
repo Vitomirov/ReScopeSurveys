@@ -5,6 +5,7 @@
  */
 import { loadConfig } from '../../config.js'
 import {
+  RESCOPESURVEYS_HOST,
   buildPublicPath,
   isPublicPathLocked,
   previewPublicPath,
@@ -49,9 +50,13 @@ export async function assignPublicPath(prisma, survey) {
 /** Match a survey row to the request host via org plan + survey domain. */
 export function surveyMatchesRequestHost(row, requestDomain, org) {
   if (!requestDomain) return true
+  const requestHost = String(requestDomain).trim().toLowerCase()
   const planId = org?.subscription?.planId || 'starter'
   const surveyDomain = readEffectiveSurveyDomain(org?.settings, planId)
-  return surveyHostMatches(requestDomain, { planId, surveyDomain })
+  if (surveyHostMatches(requestHost, { planId, surveyDomain })) return true
+  // surveys.rescopesurveys.com is the platform taker. A panel link lands here
+  // when the org has no verified custom domain, and after a domain change.
+  return requestHost === RESCOPESURVEYS_HOST
 }
 
 export async function findPublicSurvey(prisma, publicPath, clientDomain = null) {
@@ -60,19 +65,16 @@ export async function findPublicSurvey(prisma, publicPath, clientDomain = null) 
   })
   if (!rows.length) return null
 
-  const live = rows.filter(r => r.survey?.status === 'live')
-  if (!live.length) return null
+  if (!clientDomain) return rows[0]
 
-  if (!clientDomain) return live[0]
-
-  const orgIds = [...new Set(live.map(r => r.organizationId))]
+  const orgIds = [...new Set(rows.map(r => r.organizationId))]
   const orgs = await prisma.organization.findMany({
     where: { id: { in: orgIds } },
     include: { subscription: true },
   })
   const orgById = new Map(orgs.map(o => [o.id, o]))
 
-  return live.find(r => surveyMatchesRequestHost(r, clientDomain, orgById.get(r.organizationId))) || null
+  return rows.find(r => surveyMatchesRequestHost(r, clientDomain, orgById.get(r.organizationId))) || null
 }
 
 export function clientDomainFromRequest(request) {

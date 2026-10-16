@@ -64,6 +64,10 @@ function publicSurveyPayload(row, branding, { embedOrigins = [] } = {}) {
   }
 }
 
+function surveyIsClosed(row) {
+  return row?.survey?.status === 'closed'
+}
+
 async function ensurePublicOrgActive(app, organizationId, reply) {
   const active = await assertOrgActive(app.prisma, organizationId, { provision: false })
   if (active.ok) return true
@@ -74,10 +78,6 @@ async function ensurePublicOrgActive(app, organizationId, reply) {
 async function loadLivePublicSurvey(app, id, reply) {
   const cached = app.cache.getLiveSurvey(id)
   if (cached) {
-    if (cached.survey?.status !== 'live') {
-      reply.code(404).send({ error: 'Survey not found' })
-      return null
-    }
     if (!(await ensurePublicOrgActive(app, cached.organizationId, reply))) return null
     return cached
   }
@@ -115,7 +115,7 @@ async function loadLivePublicSurvey(app, id, reply) {
     if (row?.survey?.status === 'live') app.cache.setLiveSurvey(id, row)
     return row
   })
-  if (!row || row.survey?.status !== 'live') {
+  if (!row) {
     reply.code(404).send({ error: 'Survey not found' })
     return null
   }
@@ -202,6 +202,7 @@ export async function registerPublicRoutes(app) {
 
     const row = await loadLivePublicSurvey(app, request.params.id, reply)
     if (!row) return
+    if (surveyIsClosed(row)) return reply.code(404).send({ error: 'Survey not found' })
 
     const email = normalizeEmail(request.body?.email)
     if (!email || !email.includes('@')) {
@@ -223,6 +224,7 @@ export async function registerPublicRoutes(app) {
 
     const row = await loadLivePublicSurvey(app, request.params.id, reply)
     if (!row) return
+    if (surveyIsClosed(row)) return reply.code(404).send({ error: 'Survey not found' })
 
     const entry = request.body
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {

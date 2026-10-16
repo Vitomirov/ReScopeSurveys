@@ -3,16 +3,21 @@
  * Scoped to the organization, never to the staff user who created the survey.
  * Panel-only employees have no surveys of their own.
  */
-import { buildShareableSurveyUrl } from '../../../../shared/surveyUrl.js'
+import { resolveSurveyHost } from '../../../../shared/surveyUrl.js'
 
 export const ORG_SURVEY_LIST_LIMIT = 200
 
-/** Public link stored on a panel project. Dev uses the local taker. */
+/**
+ * Public link stored on a panel project.
+ * Uses the survey id, not the public path. A draft's path changes when the
+ * title is saved, and a stored path then opens as "Survey not found".
+ * Dev uses the local taker. Production uses the survey host.
+ */
 export function panelSurveyLink(survey, { planId, surveyDomain, appUrl, isDev }) {
   if (!survey?.id) return null
   if (!isDev) {
-    const share = buildShareableSurveyUrl({ survey, planId, surveyDomain })
-    if (share) return share
+    const host = resolveSurveyHost({ planId, surveyDomain })
+    return `https://surveys.${host}/#/take/${survey.id}`
   }
   const base = String(appUrl || '').replace(/\/$/, '')
   if (!base) return null
