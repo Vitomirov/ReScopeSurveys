@@ -9,6 +9,8 @@ import { resolveDncStatus } from '../lib/survey/dncCheck.js'
 import { normalizeResponseEntry } from '../lib/survey/responseNormalization.js'
 import { validateCompleteAnswers } from '../lib/survey/completeValidation.js'
 import { sendIfRateLimited } from '../lib/survey/rateLimit.js'
+import { appendAudit } from '../lib/audit.js'
+import { newWriteKey, hashWriteKey, writeKeyMatches } from '../lib/survey/responseWriteKey.js'
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 200
@@ -71,7 +73,13 @@ function entryToDbFields(entry, surveyId, organizationId) {
   }
 }
 
-export async function upsertResponse(app, { surveyId, organizationId, entry, surveyItems = [] }) {
+export async function upsertResponse(app, {
+  surveyId,
+  organizationId,
+  entry,
+  surveyItems = [],
+  publicWriter = null,
+}) {
   const normalized = normalizeResponseEntry(entry, surveyItems)
   if (!normalized || typeof normalized !== 'object') return null
 
@@ -95,7 +103,7 @@ export async function upsertResponse(app, { surveyId, organizationId, entry, sur
 
   const existing = await app.prisma.response.findUnique({
     where: { id: data.id },
-    select: { id: true, surveyId: true, organizationId: true, status: true },
+    select: { id: true, surveyId: true, organizationId: true, status: true, writeKeyHash: true },
   })
   if (existing && (existing.surveyId !== surveyId || existing.organizationId !== organizationId)) {
     return { conflict: true }
@@ -106,6 +114,18 @@ export async function upsertResponse(app, { surveyId, organizationId, entry, sur
       return { row: existing }
     }
     return { finalized: true }
+  }
+
+  if (existing?.writeKeyHash && publicWriter) {
+    if (!writeKeyMatches(existing.writeKeyHash, publicWriter.presentedKey)) {
+      return { writeKeyRejected: true }
+    }
+  }
+
+  let issuedWriteKey = null
+  if (!existing && publicWriter) {
+    issuedWriteKey = newWriteKey()
+    data.writeKeyHash = hashWriteKey(issuedWriteKey)
   }
 
   if (data.status === 'complete' || data.status === 'dnc') {
@@ -131,7 +151,7 @@ export async function upsertResponse(app, { surveyId, organizationId, entry, sur
       payload:   data.payload,
     },
   })
-  return { row }
+  return { row, issuedWriteKey }
 }
 
 /** Map upsertResponse() outcomes to an HTTP reply. Returns true when sent. */
@@ -168,6 +188,10 @@ export function sendUpsertResult(reply, result) {
         : 'Complete responses require answers to required questions',
       code: emailRequired ? 'EMAIL_REQUIRED' : 'INCOMPLETE_ANSWERS',
     })
+    return true
+  }
+  if (result.writeKeyRejected) {
+    reply.code(401).send({ error: 'Response write key required', code: 'WRITE_KEY_REQUIRED' })
     return true
   }
   return false
@@ -287,6 +311,13 @@ export async function registerResponseRoutes(app) {
     if (!existing) return reply.code(404).send({ error: 'Response not found' })
 
     await app.prisma.response.delete({ where: { id: existing.id } })
+    await appendAudit(app.prisma, {
+      organizationId: request.organizationId,
+      actorId: request.auth.userId,
+      action: 'response.delete',
+      targetEntity: 'Response',
+      targetId: existing.id,
+    })
     return { ok: true }
   })
 
@@ -298,6 +329,13 @@ export async function registerResponseRoutes(app) {
 
     await app.prisma.response.deleteMany({
       where: { surveyId: survey.id, organizationId: request.organizationId },
+    })
+    await appendAudit(app.prisma, {
+      organizationId: request.organizationId,
+      actorId: request.auth.userId,
+      action: 'response.delete',
+      targetEntity: 'Survey',
+      targetId: survey.id,
     })
     return { ok: true }
   })

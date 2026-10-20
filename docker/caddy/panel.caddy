@@ -1,0 +1,17 @@
+# Panel app. Own process on loopback :3010 — not the survey nginx on :8080.
+# Survey deploy installs this file once and does not overwrite it later.
+panel.rescopesurveys.com {
+	import browser_security
+	header X-Frame-Options SAMEORIGIN
+	header X-Content-Type-Options nosniff
+	header Referrer-Policy strict-origin-when-cross-origin
+	header Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	# Report only. Enforcing this would block the Next.js bootstrap.
+	header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+	reverse_proxy 127.0.0.1:3010 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}

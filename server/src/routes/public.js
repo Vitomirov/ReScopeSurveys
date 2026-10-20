@@ -12,6 +12,11 @@ import { buildFrameAncestorsDirective } from '../../../shared/embedProtocol.js'
 import { sendIfRateLimited } from '../lib/survey/rateLimit.js'
 import { isEmailOnDncList, normalizeEmail } from '../lib/survey/dncCheck.js'
 import { assertOrgActive } from '../lib/billing/planEnforcement.js'
+import {
+  RESPONSE_WRITE_COOKIE,
+  presentedKeyFor,
+  rememberWriteKey,
+} from '../lib/survey/responseWriteKey.js'
 
 const LIVE_SURVEY_SELECT = {
   id: true,
@@ -231,13 +236,32 @@ export async function registerPublicRoutes(app) {
       return reply.code(400).send({ error: 'Response entry is required' })
     }
 
+    const bodyId = typeof entry.id === 'string' ? entry.id.trim() : ''
     const result = await upsertResponse(app, {
       surveyId: row.id,
       organizationId: row.organizationId,
       entry,
       surveyItems: row.items || [],
+      publicWriter: {
+        presentedKey: presentedKeyFor(request.cookies?.[RESPONSE_WRITE_COOKIE], bodyId),
+      },
     })
     if (sendUpsertResult(reply, result)) return
+
+    if (result.issuedWriteKey) {
+      const { cookieSecure } = app.config
+      reply.setCookie(
+        RESPONSE_WRITE_COOKIE,
+        rememberWriteKey(request.cookies?.[RESPONSE_WRITE_COOKIE], result.row.id, result.issuedWriteKey),
+        {
+          httpOnly: true,
+          secure: cookieSecure,
+          sameSite: 'lax',
+          path: '/api/public/surveys/',
+          maxAge: 60 * 60 * 24 * 30,
+        },
+      )
+    }
 
     return { ok: true, id: result.row.id }
   })

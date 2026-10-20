@@ -45,6 +45,8 @@ model User {
   canUsePanel    Boolean  @default(false) @map("user_can_use_panel")
   tokenVersion   Int      @default(0) @map("user_token_version")
   emailVerifiedAt DateTime? @map("user_email_verified_at")
+  totpSecret     String?  @map("user_totp_secret")
+  totpEnabled    Boolean  @default(false) @map("user_totp_enabled")
   createdAt      DateTime @default(now()) @map("user_created_at")
   updatedAt      DateTime @updatedAt @map("user_updated_at")
 
@@ -150,6 +152,8 @@ model Response {
   payload        Json     @map("response_payload")
   status         String   @map("response_status")
   timestamp      DateTime @default(now()) @map("response_timestamp")
+  /// Set only for public creates. Null rows keep the previous UUID update.
+  writeKeyHash   String?  @map("response_write_key_hash")
 
   survey       Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -159,6 +163,21 @@ model Response {
   @@index([surveyId, status])
   @@index([organizationId, surveyId])
   @@map("responses")
+}
+
+/// Append-only. No foreign keys, so a deleted organization can still be named.
+model AuditEvent {
+  id             String   @id @default(uuid())
+  organizationId String?  @map("organization_id")
+  actorId        String?  @map("actor_id")
+  action         String   @map("audit_action")
+  targetEntity   String   @map("target_entity")
+  targetId       String   @map("target_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([targetEntity, targetId])
+  @@map("audit_events")
 }
 
 model SurveyExport {

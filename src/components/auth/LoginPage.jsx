@@ -24,6 +24,8 @@ export function LoginPage({ onLogin, initialMode = 'login', onGoHome, signupPlan
   const [password, setPassword] = useState('')
   const [confirm,  setConfirm]  = useState('')
   const [showPass, setShowPass] = useState(false)
+  const [totpRequired, setTotpRequired] = useState(false)
+  const [totpCode, setTotpCode] = useState('')
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
 
@@ -71,8 +73,13 @@ export function LoginPage({ onLogin, initialMode = 'login', onGoHome, signupPlan
 
     if (!email || !password) { setError(AUTH_VALIDATION.loginRequired); return }
     setLoading(true)
-    const result = await login(email, password)
+    const result = await login(email, password, totpRequired ? totpCode : undefined)
     setLoading(false)
+    if (result.code === 'TOTP_REQUIRED') {
+      setTotpRequired(true)
+      setError('Enter the code from your authenticator app.')
+      return
+    }
     if (result.ok) {
       prefetchForRoute({ session: result.session })
       onLogin(result.session)
@@ -186,6 +193,21 @@ export function LoginPage({ onLogin, initialMode = 'login', onGoHome, signupPlan
           </button>
         </div>
       </div>
+
+      {!isSignup && totpRequired && (
+        <div>
+          <label className="text-xs font-semibold text-ink-600 block mb-1">Authenticator code</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totpCode}
+            onChange={e => setTotpCode(e.target.value)}
+            className="input-base"
+            autoFocus
+          />
+        </div>
+      )}
 
       {isSignup && (
         <div>

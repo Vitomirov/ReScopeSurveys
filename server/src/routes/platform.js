@@ -15,6 +15,7 @@ import {
   deriveUsernameForOrg,
 } from '../lib/auth/userIdentity.js'
 import { grantFromFlags, hasPanelGrant, resolveProductGrant } from '../lib/auth/productAccess.js'
+import { appendAudit } from '../lib/audit.js'
 
 const newId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 const adminOnly = requireRole(ROLES.ADMIN)
@@ -315,6 +316,15 @@ export async function registerPlatformRoutes(app) {
         })
       : await app.prisma.user.update({ where: { id: existing.id }, data })
     app.cache.invalidateUser(existing.id)
+    if (role && role !== existing.role) {
+      await appendAudit(app.prisma, {
+        organizationId: request.organizationId,
+        actorId: request.auth.userId,
+        action: 'role.change',
+        targetEntity: 'User',
+        targetId: existing.id,
+      })
+    }
     const result = { user: userResponse(row) }
     if (password) result.temporaryPassword = password
     return result

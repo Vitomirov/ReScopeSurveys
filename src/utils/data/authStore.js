@@ -56,16 +56,23 @@ export function getSession() {
   } catch { return null }
 }
 
-export async function login(email, password) {
+export async function login(email, password, code) {
   if (useApi) {
     try {
       const data = await apiFetch('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          ...(code ? { code } : {}),
+        }),
       })
       writeSessionStorage(data.session)
       return { ok: true, session: data.session }
     } catch (err) {
+      if (err.body?.code === 'TOTP_REQUIRED') {
+        return { ok: false, code: 'TOTP_REQUIRED', error: err.message }
+      }
       return { ok: false, error: err.message || AUTH_ERRORS.invalidCredentials }
     }
   }

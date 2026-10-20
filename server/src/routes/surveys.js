@@ -12,6 +12,7 @@ import { assignPublicPath } from '../lib/survey/surveyPublicPath.js'
 import { enforceSurveyBranding, loadOrgPlanContext } from '../lib/branding/brandEnforcement.js'
 import { assertCanCreateSurvey } from '../lib/billing/planEnforcement.js'
 import { sanitizeSurveyHtml, sanitizeSurveyItems } from '../lib/survey/sanitizeHtml.js'
+import { appendAudit } from '../lib/audit.js'
 
 async function loadPlatformLists(prisma, organizationId) {
   const [clients, topics, surveyTypes] = await Promise.all([
@@ -153,6 +154,17 @@ export async function registerSurveyRoutes(app) {
       })
 
       app.cache.invalidateSurvey(id, request.organizationId)
+      const previousStatus = existing.survey?.status
+      const nextStatus = surveyData?.status ?? existing.survey?.status
+      if (previousStatus !== 'live' && nextStatus === 'live') {
+        await appendAudit(app.prisma, {
+          organizationId: request.organizationId,
+          actorId: request.auth.userId,
+          action: 'survey.publish',
+          targetEntity: 'Survey',
+          targetId: id,
+        })
+      }
       return {
         id:         updated.id,
         revision:   updated.revision,
@@ -203,6 +215,15 @@ export async function registerSurveyRoutes(app) {
     })
 
     app.cache.invalidateSurvey(created.id, request.organizationId)
+    if (surveyData?.status === 'live') {
+      await appendAudit(app.prisma, {
+        organizationId: request.organizationId,
+        actorId: request.auth.userId,
+        action: 'survey.publish',
+        targetEntity: 'Survey',
+        targetId: created.id,
+      })
+    }
     return reply.code(201).send({
       id:         created.id,
       revision:   created.revision,

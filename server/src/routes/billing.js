@@ -30,6 +30,7 @@ import {
 } from '../lib/billing/billingNotifications.js'
 import { buildPlanChangeOptions, applyPlanChange } from '../lib/billing/changePlan.js'
 import { deleteOrganization } from '../lib/platform/deleteOrganization.js'
+import { appendAudit } from '../lib/audit.js'
 import { loadConfig } from '../config.js'
 
 const adminOnly = requireRole(ROLES.ADMIN)
@@ -435,6 +436,14 @@ export async function registerVendorRoutes(app) {
       app.cache.invalidateUser(userId)
     }
     app.cache.invalidateOrg(result.deleted.organizationId)
+
+    await appendAudit(app.prisma, {
+      organizationId: result.deleted.organizationId,
+      actorId: request.auth.userId,
+      action: 'organization.delete',
+      targetEntity: 'Organization',
+      targetId: result.deleted.organizationId,
+    })
 
     return { ok: true, deleted: result.deleted }
   })

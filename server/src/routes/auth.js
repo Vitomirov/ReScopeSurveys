@@ -26,6 +26,14 @@ import {
 import { sendVerificationEmail } from '../lib/auth/accountLinks.js'
 import { catalogPlan } from '../../../shared/planCatalog.js'
 import { loadProductSession } from '../lib/auth/productAccess.js'
+import { appendAudit } from '../lib/audit.js'
+import {
+  assertTotpIfEnabled,
+  generateTotpSecret,
+  sealTotpSecret,
+  totpKeyUri,
+  verifyTotpToken,
+} from '../lib/auth/totp.js'
 
 const MAX_AVATAR_BYTES = 512 * 1024
 
@@ -148,7 +156,19 @@ export async function registerAuthRoutes(app) {
       return reply.code(401).send({ error: 'Invalid email or password.' })
     }
 
+    const totp = assertTotpIfEnabled(user, request.body?.code)
+    if (!totp.ok) {
+      return reply.code(401).send({ error: totp.error, code: totp.code })
+    }
+
     const session = await issueAuthSession(app, reply, user, user.organization?.name)
+    await appendAudit(app.prisma, {
+      organizationId: user.organizationId,
+      actorId: user.id,
+      action: 'login',
+      targetEntity: 'User',
+      targetId: user.id,
+    })
     return { session }
   })
 
@@ -313,5 +333,77 @@ export async function registerAuthRoutes(app) {
       },
       session,
     }
+  })
+
+  app.get('/api/auth/totp', async (request) => {
+    const row = await app.prisma.user.findUnique({
+      where: { id: request.auth.userId },
+      select: { totpEnabled: true },
+    })
+    return { enabled: Boolean(row?.totpEnabled) }
+  })
+
+  app.post('/api/auth/totp/setup', async (request, reply) => {
+    const row = await app.prisma.user.findUnique({
+      where: { id: request.auth.userId },
+      select: { totpEnabled: true, email: true },
+    })
+    if (!row) return reply.code(404).send({ error: 'User not found.' })
+    if (row.totpEnabled) {
+      return reply.code(409).send({ error: 'Authenticator is already on.' })
+    }
+    try {
+      const secret = generateTotpSecret()
+      sealTotpSecret(secret)
+      return { secret, otpauth: totpKeyUri(row.email, secret) }
+    } catch (err) {
+      if (err.code === 'TOTP_KEY_MISSING') {
+        return reply.code(503).send({ error: 'Authenticator is not available.', code: err.code })
+      }
+      throw err
+    }
+  })
+
+  app.post('/api/auth/totp/enable', async (request, reply) => {
+    const { secret, code } = request.body ?? {}
+    if (!secret || !String(code || '').trim()) {
+      return reply.code(400).send({ error: 'Secret and authenticator code are required.' })
+    }
+    if (!verifyTotpToken(code, secret)) {
+      return reply.code(401).send({ error: 'Invalid authenticator code.', code: 'TOTP_INVALID' })
+    }
+    let sealed
+    try {
+      sealed = sealTotpSecret(secret)
+    } catch (err) {
+      if (err.code === 'TOTP_KEY_MISSING') {
+        return reply.code(503).send({ error: 'Authenticator is not available.', code: err.code })
+      }
+      throw err
+    }
+    await app.prisma.user.update({
+      where: { id: request.auth.userId },
+      data: { totpSecret: sealed, totpEnabled: true },
+    })
+    app.cache.invalidateUser(request.auth.userId)
+    return { enabled: true }
+  })
+
+  app.post('/api/auth/totp/disable', async (request, reply) => {
+    const { password, code } = request.body ?? {}
+    const row = await app.prisma.user.findUnique({ where: { id: request.auth.userId } })
+    if (!row) return reply.code(404).send({ error: 'User not found.' })
+    if (!row.totpEnabled) return { enabled: false }
+    if (!(await verifyPassword(password || '', row.passwordHash))) {
+      return reply.code(401).send({ error: 'Current password is incorrect.' })
+    }
+    const totp = assertTotpIfEnabled(row, code)
+    if (!totp.ok) return reply.code(401).send({ error: totp.error, code: totp.code })
+    await app.prisma.user.update({
+      where: { id: row.id },
+      data: { totpSecret: null, totpEnabled: false },
+    })
+    app.cache.invalidateUser(row.id)
+    return { enabled: false }
   })
 }

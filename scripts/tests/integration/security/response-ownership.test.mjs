@@ -80,6 +80,7 @@ test('cross-survey response replay returns 409; same-survey resume succeeds', as
 
   const resume = await api(`/api/public/surveys/${idA}/responses`, {
     method: 'POST',
+    cookies: first.cookies,
     body: responseEntry(responseId, 'complete'),
   })
   assert.equal(resume.status, 200, `public resume A: ${JSON.stringify(resume.data)}`)

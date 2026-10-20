@@ -21,6 +21,7 @@ services:
   postgres:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD to a strong random value}
+    mem_limit: ${POSTGRES_MEMORY:-512m}
 
   redis:
     image: redis:7.4-alpine
@@ -68,7 +69,9 @@ services:
       RUN_PLATFORM_LIST_MIGRATION: 'false'
       REQUIRE_STRONG_JWT: 'true'
       RATE_LIMIT_RELAXED: 'false'
+    mem_limit: ${API_MEMORY:-768m}
 
   web:
     ports: !override
       - '127.0.0.1:${WEB_HOST_PORT:-8080}:80'
+    mem_limit: ${WEB_MEMORY:-256m}

@@ -6,6 +6,7 @@ import { updateProfileLocal } from '@/utils/data/authStore'
 import { AUTH_PROFILE, AUTH_VALIDATION } from '@/constants/authCopy'
 import { useToast } from '@/components/ui'
 import { UserAvatar } from './UserAvatar.jsx'
+import { TotpSettings } from './TotpSettings.jsx'
 
 const MAX_AVATAR_BYTES = 512 * 1024
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -167,6 +168,7 @@ export function ProfileSettingsPanel({ session, profile, onSessionUpdate, onProf
   }
 
   return (
+    <>
     <section className="rounded-xl border border-ink-100 bg-white p-4 sm:p-5">
       <div className="mb-4">
         <h3 className="text-sm font-bold text-ink-800">{AUTH_PROFILE.myProfile}</h3>
@@ -291,6 +293,8 @@ export function ProfileSettingsPanel({ session, profile, onSessionUpdate, onProf
         </button>
       </div>
     </section>
+    {useApi ? <TotpSettings /> : null}
+    </>
   )
 }
 

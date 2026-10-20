@@ -56,18 +56,9 @@ surveys.rescopesurveys.com {
 	import proxy_to_web
 }
 
-# Panel app. Own process on loopback :3010 — not the survey nginx on :8080.
-# Added to PRODUCTION_DOMAINS so Caddy is not reloaded until this name resolves.
-panel.rescopesurveys.com {
-	import browser_security
-	header X-Frame-Options SAMEORIGIN
-	reverse_proxy 127.0.0.1:3010 {
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-Proto {scheme}
-		header_up X-Forwarded-Host {host}
-	}
-}
+# Panel site lives in panel.caddy next to this file (/etc/caddy/panel.caddy
+# on the VPS). Survey deploy copies that file only when it is missing.
+import panel.caddy
 
 # Verified enterprise survey hosts (on-demand TLS; no manual block per customer).
 :443 {

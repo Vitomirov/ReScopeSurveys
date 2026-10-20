@@ -53,9 +53,21 @@ done
 echo ""
 compose_cmd ps
 
+install_panel_caddy_if_missing() {
+  local src="$ROOT/docker/caddy/panel.caddy"
+  local dest="/etc/caddy/panel.caddy"
+  [[ -f "$src" ]] || return 0
+  if [[ -f "$dest" ]]; then
+    return 0
+  fi
+  echo "==> Installing ${dest} (left in place on later deploys)"
+  sudo_cmd cp "$src" "$dest"
+}
+
 reload_caddy_if_changed() {
   local src="$ROOT/docker/caddy/Caddyfile"
   [[ -f "$src" ]] || return 0
+  install_panel_caddy_if_missing
   if [[ -f /etc/caddy/Caddyfile ]] && cmp -s "$src" /etc/caddy/Caddyfile 2>/dev/null; then
     return 0
   fi

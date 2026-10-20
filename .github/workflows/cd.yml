@@ -46,6 +46,7 @@ jobs:
             docker-compose.yml \
             docker-compose.prod.yml \
             docker/caddy/Caddyfile \
+            docker/caddy/panel.caddy \
             scripts/deploy
 
       - name: Copy bundle to VPS
