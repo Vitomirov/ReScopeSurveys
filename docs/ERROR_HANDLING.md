@@ -78,7 +78,7 @@ Other framework cases:
 |------|----------|
 | **Survey access** | `findAccessibleSurvey()` → **404** if missing or outside `surveyScope()` |
 | **Public taker** | Inactive org or non-live survey → **404** (no leak of billing state) |
-| **Response submit** | `upsertResponse()` + `sendUpsertResult()` → **400** / **409** with specific copy |
+| **Response submit** | `upsertResponse()` + `sendUpsertResult()` → **400** / **409** with specific copy. Public finish may return **202** `{ ok: true, accepted: true, id }` when the write is queued in Redis; the row is upserted by the inbox worker |
 | **Survey PATCH** | Optimistic `revision` → **409** `Revision conflict` + current `revision` |
 | **Rate limits** | **429** + `RateLimit-*` / `Retry-After` headers |
 | **CSRF** | **403** + `code: CSRF_BLOCKED` |
@@ -115,7 +115,7 @@ Dual mode: **localStorage** (offline demo) vs **API** (`VITE_USE_API=true`). Err
 
 `src/api/client.js` — `apiFetch()`:
 
-- Parses JSON errors into **`ApiError`** (`message`, `status`, `body`)
+- Parses JSON errors into **`ApiError`** (`message`, `status`, `body`, `retryAfter` from `Retry-After`)
 - **401** on protected routes: attempts cookie refresh once, then `notifyAuthInvalidated()` → logout toast
 - Attaches CSRF header on mutating requests when using cookies
 
@@ -126,13 +126,13 @@ Dual mode: **localStorage** (offline demo) vs **API** (`VITE_USE_API=true`). Err
 | Route shell | `ErrorBoundary` in `App.jsx` | Catches render errors — Try again / Reload |
 | Builder saves | `useAutosave` | **409** revision → refetch + hydrate; shows save status in header |
 | Dashboard / settings | Panel `catch` | Toasts with `err.message` or copy from `*Copy.js` constants |
-| Public taker | `SurveyPreview` | Validation errors inline; failed response POST currently logs to console only (known gap) |
+| Public taker | `SurveyPreview` | Validation errors stay inline. Finish, termination, and external redirect wait for **200** or **202** before the existing end screen. **429** / **502** / **503** / network loss keep one `sessionStorage` copy and retry |
 
 See [CODE_REFERENCE.md — Error boundaries](CODE_REFERENCE.md#error-boundaries) for wrapped surfaces.
 
 ### Load failures
 
-`App.jsx` maps survey fetch **404** to “Survey not found”. Other fetch errors on the builder show the same not-found style; the public taker path treats any non-ready state as not found (operational improvement deferred).
+`App.jsx` maps survey fetch **404** to “Survey not found”. On the public taker, **429**, **502**, **503**, and a failed fetch show “The survey is busy. Trying again…” and retry the same GET. Any other public load error shows “The survey could not be opened. Reload the page to try again.” Builder routes are unchanged.
 
 ---
 

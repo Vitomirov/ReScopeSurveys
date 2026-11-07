@@ -53,6 +53,7 @@ export async function registerRateLimits(app, config) {
     )
   }
 
+  app.decorate('redis', redisClient)
   app.decorate('rateLimits', createRouteLimiters({
     relaxed: config.rateLimitRelaxed,
     disabled: config.rateLimitDisabled,

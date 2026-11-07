@@ -79,6 +79,10 @@ export function mapDatabaseError(error) {
   return null
 }
 
+export function isDatabaseUnavailable(error) {
+  return mapDatabaseError(error)?.code === 'DB_UNAVAILABLE'
+}
+
 function isClientSafeApiCode(code) {
   return typeof code === 'string'
     && code.length > 0

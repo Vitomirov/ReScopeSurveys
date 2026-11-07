@@ -16,6 +16,28 @@ export function newWriteKey() {
   return randomBytes(32).toString('base64url')
 }
 
+/**
+ * Decide the write-key hash for one upsert.
+ * A trusted hash is the inbox copy of a key already handed to the browser.
+ * Returns writeKeyRejected when the presented secret does not match the row.
+ */
+export function resolveWriteKey(existing, publicWriter) {
+  if (existing?.writeKeyHash && publicWriter) {
+    const matches = publicWriter.trustedHash
+      ? publicWriter.trustedHash === existing.writeKeyHash
+      : writeKeyMatches(existing.writeKeyHash, publicWriter.presentedKey)
+    if (!matches) return { writeKeyRejected: true }
+  }
+  if (!existing && publicWriter?.trustedHash) {
+    return { writeKeyHash: publicWriter.trustedHash, issuedWriteKey: null }
+  }
+  if (!existing && publicWriter) {
+    const issuedWriteKey = newWriteKey()
+    return { writeKeyHash: hashWriteKey(issuedWriteKey), issuedWriteKey }
+  }
+  return { writeKeyHash: null, issuedWriteKey: null }
+}
+
 export function writeKeyMatches(storedHash, presentedKey) {
   if (!storedHash || !presentedKey) return false
   const got = hashWriteKey(presentedKey)

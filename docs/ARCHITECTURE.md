@@ -206,7 +206,40 @@ PostgreSQL via Prisma (`server/prisma/schema.prisma`).
 
 Public writes: `POST /api/public/surveys/:id/responses` (no auth).
 
-Payload includes `status` (`complete` | `terminated` | `partial` | `dnc`), answer map, optional fingerprint, and `pageReached`.
+Payload includes `status` (`complete` | `terminated` | `partial` | `dnc`), answer map, optional fingerprint, and `pageReached`. The browser creates the response UUID. A repeat of that id updates the same row. A finished row (`complete`, `terminated`, `dnc`) is not downgraded to `partial`.
+
+Answers stay in the tab until Finish, a termination, or an external redirect. Nothing is posted on Next.
+
+### Public taker under load
+
+A rush of opens and a rush of finishes are handled separately. Postgres remains the only place a response row is inserted or updated (`upsertResponse`). This path does not delete rows.
+
+**Opening a live link**
+
+`GET /api/public/s/:publicPath` and `GET /api/public/surveys/:id` keep a 5-second in-process copy of the live survey, keyed by id and by public path plus host (`server/src/plugins/hotCache.js`). A hit does not read Postgres and does not count against the per-survey fetch cap (600/minute). The per-IP cap (60/minute) still applies. Unpublish, survey edit, and org branding changes drop the copy through the existing `invalidateSurvey` / `invalidateOrg` calls. Staleness is at most 5 seconds.
+
+While that fetch is retryable (429, 502, 503, or a dropped connection), the public page shows “The survey is busy. Trying again…” and retries. HTTP 404 still shows “Survey not found”.
+
+**Finishing**
+
+`server/src/lib/survey/responseInbox.js` allows 8 direct writes at a time.
+
+| Database slot | What the API does | What the taker does |
+|---------------|-------------------|---------------------|
+| Free | `upsertResponse`, **200** | Clears the tab copy and shows the existing end screen |
+| All 8 busy, or Postgres unavailable | Appends the finish to the Redis stream and returns **202** `{ ok: true, accepted: true, id }` | Same end screen. The row appears in exports when the worker upserts |
+| Redis cannot accept the append | Falls back to the direct upsert | End screen only after that upsert returns 200 |
+| Per-IP cap (30/minute), 502, 503, or network loss | Does not claim success | Keeps the tab copy and retries. Copy: “The survey is busy. Your answers are saved in this tab. Trying again…” |
+
+The per-survey cap of 300 finishes per minute is not applied to this public POST. Authenticated `POST /api/surveys/:id/responses` stays a direct upsert.
+
+The stream is `rescope:response-inbox`. One worker on the API process calls `upsertResponse` and acknowledges the entry only after that call returns. A database error leaves the entry in the stream for another try. There is no dead-letter drop. The write key issued to the browser is stored in Redis only as a hash (`resolveWriteKey`).
+
+The tab copy lives in `sessionStorage` (`src/utils/data/pendingResponse.js`), one entry per survey. Refresh in the same tab resumes it. Closing the tab drops it. A finish already accepted into Redis does not need that copy.
+
+Production Redis (`docker-compose.prod.yml`) uses AOF (`appendfsync everysec`), 256 MB, and `volatile-lru`. Rate-limit keys expire, so they can be evicted. Stream entries have no TTL, so that policy does not evict them. If Redis is out of memory it refuses a new append instead of deleting a queued finish. A Redis restart does not touch Postgres.
+
+A same-second pile of TCP connections can still exhaust the API container’s memory and make Docker restart it. Rows already committed, and finishes already in the AOF stream, survive that restart.
 
 ---
 

@@ -11,7 +11,13 @@ import { prefetchForRoute } from '@/utils/routing/routePrefetch'
 import { useRoute, nav, navMarketingHome, isMarketingRoute, isAccountLinkView } from '@/utils/routing/appRoute'
 import { isMarketingSiteHost, usesSplitSiteHosts, assignAppRoute } from '@shared/siteHosts.js'
 import { isNewSurveyDraft, markNewSurveyDraft } from '@/utils/data/surveyDrafts'
-import { SURVEY_NOT_FOUND_MESSAGE, SURVEY_NOT_FOUND_TITLE } from '@/constants/errors'
+import {
+  SURVEY_BUSY_LOAD,
+  SURVEY_LOAD_ERROR,
+  SURVEY_NOT_FOUND_MESSAGE,
+  SURVEY_NOT_FOUND_TITLE,
+} from '@/constants/errors'
+import { isRetryableStatus, retryDelayMs } from '@/utils/data/pendingResponse'
 
 import { useSurveyBranding } from '@/hooks/useSurveyBranding'
 import { isPlatformOwner } from '@/utils/platform/permissions'
@@ -42,7 +48,7 @@ async function fetchEntry(view, id, { byPath = false, clientDomain = null, isEmb
   return loadSurvey(id)
 }
 
-/** Survey for the current route: 'loading' | 'ready' | 'missing' | 'error'. */
+/** Survey for the current route: 'loading' | 'busy' | 'ready' | 'missing' | 'error'. */
 function useSurveyEntry(view, id, { byPath = false, clientDomain = null, isEmbed = false } = {}) {
   const [state, setState] = useState(() => ({ status: id ? 'loading' : 'ready', entry: null }))
 
@@ -53,11 +59,34 @@ function useSurveyEntry(view, id, { byPath = false, clientDomain = null, isEmbed
       return
     }
     let alive = true
-    setState({ status: 'loading', entry: null })
-    fetchEntry(view, id, { byPath, clientDomain, isEmbed })
-      .then(entry => { if (alive) setState({ status: entry ? 'ready' : 'missing', entry }) })
-      .catch(err  => { if (alive) setState({ status: err?.status === 404 ? 'missing' : 'error', entry: null }) })
-    return () => { alive = false }
+    let timer = null
+    let attempt = 0
+
+    const run = () => {
+      setState({ status: attempt === 0 ? 'loading' : 'busy', entry: null })
+      fetchEntry(view, id, { byPath, clientDomain, isEmbed })
+        .then(entry => {
+          if (!alive) return
+          setState({ status: entry ? 'ready' : 'missing', entry })
+        })
+        .catch(err => {
+          if (!alive) return
+          const retryPublic = view === 'take' && isRetryableStatus(err?.status)
+          if (!retryPublic) {
+            setState({ status: err?.status === 404 ? 'missing' : 'error', entry: null })
+            return
+          }
+          attempt += 1
+          setState({ status: 'busy', entry: null })
+          timer = setTimeout(run, retryDelayMs({ retryAfterSeconds: err?.retryAfter, attempt }))
+        })
+    }
+
+    run()
+    return () => {
+      alive = false
+      if (timer) clearTimeout(timer)
+    }
   }, [view, id, byPath, clientDomain, isEmbed])
 
   return state
@@ -69,6 +98,17 @@ function Page({ title, label, onReset, children }) {
     <ErrorBoundary title={title} onReset={onReset}>
       <Suspense fallback={<PageLoader label={label} />}>{children}</Suspense>
     </ErrorBoundary>
+  )
+}
+
+function SurveyNotice({ title, message }) {
+  return (
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+      <div className="max-w-md text-center">
+        <h2 className="text-xl font-bold text-ink-800 mb-2">{title}</h2>
+        <p className="text-ink-500 mb-4">{message}</p>
+      </div>
+    </div>
   )
 }
 
@@ -192,7 +232,11 @@ export default function App() {
 
   if (isPublic) {
     if (status === 'loading') return <PageLoader label="Loading survey…" />
-    if (status !== 'ready')   return <NotFound />
+    if (status === 'busy') return <PageLoader label={SURVEY_BUSY_LOAD} />
+    if (status === 'missing') return <NotFound />
+    if (status !== 'ready') {
+      return <SurveyNotice title="Survey unavailable" message={SURVEY_LOAD_ERROR} />
+    }
     return (
       <Page title="Survey error" label="Loading survey…">
         <SurveyPreview

@@ -10,7 +10,7 @@ import { normalizeResponseEntry } from '../lib/survey/responseNormalization.js'
 import { validateCompleteAnswers } from '../lib/survey/completeValidation.js'
 import { sendIfRateLimited } from '../lib/survey/rateLimit.js'
 import { appendAudit } from '../lib/audit.js'
-import { newWriteKey, hashWriteKey, writeKeyMatches } from '../lib/survey/responseWriteKey.js'
+import { resolveWriteKey } from '../lib/survey/responseWriteKey.js'
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 200
@@ -116,17 +116,10 @@ export async function upsertResponse(app, {
     return { finalized: true }
   }
 
-  if (existing?.writeKeyHash && publicWriter) {
-    if (!writeKeyMatches(existing.writeKeyHash, publicWriter.presentedKey)) {
-      return { writeKeyRejected: true }
-    }
-  }
-
-  let issuedWriteKey = null
-  if (!existing && publicWriter) {
-    issuedWriteKey = newWriteKey()
-    data.writeKeyHash = hashWriteKey(issuedWriteKey)
-  }
+  const writeKey = resolveWriteKey(existing, publicWriter)
+  if (writeKey.writeKeyRejected) return { writeKeyRejected: true }
+  const issuedWriteKey = writeKey.issuedWriteKey
+  if (writeKey.writeKeyHash) data.writeKeyHash = writeKey.writeKeyHash
 
   if (data.status === 'complete' || data.status === 'dnc') {
     const completeness = validateCompleteAnswers(normalized, surveyItems)

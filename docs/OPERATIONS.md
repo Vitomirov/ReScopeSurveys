@@ -342,9 +342,19 @@ Results: `k6/results/summary.json`
 - ~30–40 concurrent dashboard users
 - p95 API latency under 800 ms
 
-Production adds Caddy TLS overhead and rate limiting. Do not run full load tests against a live tenant-facing server from a single IP — rate limits will trigger 429 responses.
+The k6 overlay turns rate limits off. Production keeps them, and adds the public-taker handoff described in [ARCHITECTURE.md](ARCHITECTURE.md#public-taker-under-load).
 
-Upgrade path: larger VPS (CX32), or separate database host for heavy workloads.
+What a fieldwork spike does on the current production stack:
+
+- Live survey JSON is served from a 5-second memory cache. Opens that hit the cache do not take a Postgres connection and do not use the 600/minute per-survey cap. Each IP is still limited to 60 opens a minute.
+- Finishes are no longer discarded by a 300/minute per-survey cap. Up to 8 writes run against Postgres at once. Further finishes return **202** and wait in the Redis stream until `upsertResponse` stores them. The respondent sees the end screen once the finish is accepted, which can be before the row is visible in Export.
+- One IP can still save only 30 times a minute. The taker keeps that finish in the tab and retries.
+- Redis must keep AOF on (`docker-compose.prod.yml`: `appendonly yes`, `volatile-lru`, 256 MB). Do not point the inbox at a Redis that uses `allkeys-lru` or runs without AOF. That configuration can drop queued finishes.
+- A container restart does not delete response rows. Queued finishes remain in the AOF stream and are upserted after the API is back. A finish that never reached Redis stays in the respondent’s tab until the tab is closed.
+
+Do not run a full load test against a live tenant-facing server from a single IP. Per-IP limits return 429, and the taker will retry those requests.
+
+Upgrade path: larger VPS (CX32), or a separate database host for heavy workloads. The inbox does not add a second database.
 
 ---
 

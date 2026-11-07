@@ -1,13 +1,15 @@
 import { useApi } from '@/config/api'
 import { notifyAuthInvalidated } from '@/api/auth/authEvents'
 import { AUTH_ERRORS } from '@/constants/authCopy'
+import { parseRetryAfterSeconds } from '@/utils/data/pendingResponse'
 
 export class ApiError extends Error {
-  constructor(message, { status, body } = {}) {
+  constructor(message, { status, body, retryAfter = null } = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.body = body
+    this.retryAfter = retryAfter
   }
 }
 
@@ -127,12 +129,14 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const message = data?.error || res.statusText || 'Request failed'
+    const retryAfter = parseRetryAfterSeconds(res.headers.get('Retry-After'))
     if (res.status === 403 && data?.code === 'FORBIDDEN') {
-      throw new ApiError(message || AUTH_ERRORS.forbidden, { status: res.status, body: data })
+      throw new ApiError(message || AUTH_ERRORS.forbidden, { status: res.status, body: data, retryAfter })
     }
     throw new ApiError(message, {
       status: res.status,
       body: data,
+      retryAfter,
     })
   }
 

@@ -4,6 +4,15 @@ import { buildVisiblePages } from '@/utils/survey/engines/visibilityEngine'
 import { resolvePipingTokens } from '@/utils/survey/questions/piping'
 import { generateCSV, downloadCSV } from '@/utils/csvExport'
 import { saveResponse, newResponseId } from '@/utils/data/responseStore'
+import {
+  clearPendingResponse,
+  isRetryableStatus,
+  readPendingResponse,
+  retryDelayMs,
+  wait,
+  writePendingResponse,
+} from '@/utils/data/pendingResponse'
+import { SAVE_REJECTED, SAVING_RESPONSE, SURVEY_BUSY_SAVE } from '@/constants/errors'
 import { useApi } from '@/config/api'
 import { saveResponseApi, savePublicResponse } from '@/api/survey/responses'
 import { collectFingerprint } from '@/utils/format/deviceSignals'
@@ -34,12 +43,15 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
   const [terminated, setTerminated]     = useState(false)
   const [terminatedBy, setTerminatedBy] = useState(null)
   const [redirectedTo, setRedirectedTo] = useState(null)
+  const [holding, setHolding]           = useState(null) // 'saving' | 'busy' | 'rejected' | null
   const [showCover, setShowCover]       = useState(survey?.showCoverPage !== false)
   const [lockVisitKey, setLockVisitKey] = useState(0)
   const bumpLockVisit = () => setLockVisitKey(k => k + 1)
   const [fingerprint, setFingerprint]   = useState(null)
   const [fpStatus, setFpStatus]         = useState('idle') // 'idle' | 'collecting' | 'done'
   const responseIdRef = useRef(null)
+  const saveGen = useRef(0)
+  const saveLock = useRef(false)
 
   // ── Collect device/browser fingerprint once, on mount ──────────────────
   // Runs in the background regardless of cover page state, so by the time
@@ -106,7 +118,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
   const currentItems     = pages[currentPage] || []
   const currentQuestions = currentItems.filter(i => i.itemType === 'question')
   const currentPageLockSeconds = navigationLockByPage[currentPage] || 0
-  const isSurveyContentActive = !showCover && !submitted && !terminated && !redirectedTo
+  const isSurveyContentActive = !showCover && !submitted && !terminated && !redirectedTo && !holding
     && !(isPublic && survey?.status === 'closed')
   const { isLocked: isNavigationLocked, remainingSeconds } = usePageNavigationLock(
     currentPageLockSeconds,
@@ -139,8 +151,12 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
   }, [currentItems, responses, items])
 
   const reset = () => {
+    saveGen.current += 1
+    saveLock.current = false
+    if (survey?.id) clearPendingResponse(survey.id)
     setResponses({}); setCompanions({}); setErrors({}); setCurrentPage(0)
     setSubmitted(false); setTerminated(false); setTerminatedBy(null); setRedirectedTo(null)
+    setHolding(null)
     setShowCover(survey?.showCoverPage !== false)
     bumpLockVisit()
     responseIdRef.current = null
@@ -172,59 +188,95 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
     }
   }
 
-  // ── Auto-save to localStorage + optionally download CSV ───────────────
-  const persistAndDownload = async (status, terminatedByArg = null, doDownload = false) => {
-    // ── DNC check — only for completed responses ──────────────────────────
-    let finalStatus = status
-    if (status === 'complete' && survey?.id) {
-      const emailQ = items.find(i => i.itemType === 'question' && i.isEmailField)
-      if (emailQ) {
-        const emailAnswer = responses[emailQ.id] || ''
-        if (await isOnDNCListAsync(survey.id, emailAnswer, { publicMode: isPublic })) {
-          finalStatus = 'dnc'
+  const reveal = (record) => {
+    if (record.outcome === 'terminated') {
+      setTerminatedBy(record.terminatedBy || null)
+      setTerminated(true)
+      return
+    }
+    if (record.outcome === 'redirect') {
+      if (record.redirectUrl) openExternalRedirect(record.redirectUrl)
+      setRedirectedTo(record.redirectUrl || null)
+      return
+    }
+    setSubmitted(true)
+  }
+
+  // A 2xx response is a confirmed handoff: 200 is stored, 202 is accepted into the inbox.
+  const commitRecord = async (record) => {
+    const gen = ++saveGen.current
+    setHolding('saving')
+    if (useApi && survey?.id) writePendingResponse(survey.id, record)
+    let attempt = 0
+    while (saveGen.current === gen) {
+      try {
+        if (survey?.id) {
+          if (useApi) {
+            const save = isPublic ? savePublicResponse : saveResponseApi
+            await save(survey.id, record.entry)
+          } else {
+            saveResponse(survey.id, record.entry)
+          }
+        }
+        if (saveGen.current !== gen) return
+        if (useApi && survey?.id) clearPendingResponse(survey.id)
+        setHolding(null)
+        reveal(record)
+        return
+      } catch (err) {
+        if (saveGen.current !== gen) return
+        console.error('Failed to save response', err)
+        if (!isRetryableStatus(err?.status)) {
+          setHolding('rejected')
+          return
+        }
+        attempt += 1
+        setHolding('busy')
+        await wait(retryDelayMs({ retryAfterSeconds: err?.retryAfter, attempt }))
+      }
+    }
+  }
+
+  const startSave = (outcome, terminatedByArg = null, redirectUrl = null, responseSnapshot = null) => {
+    if (saveLock.current) return
+    saveLock.current = true
+    setHolding('saving')
+    void (async () => {
+      let finalStatus = outcome === 'terminated' ? 'terminated' : outcome === 'redirect' ? 'partial' : 'complete'
+      if (finalStatus === 'complete' && survey?.id) {
+        const emailQ = items.find(i => i.itemType === 'question' && i.isEmailField)
+        if (emailQ) {
+          const emailAnswer = responses[emailQ.id] || ''
+          try {
+            if (await isOnDNCListAsync(survey.id, emailAnswer, { publicMode: isPublic })) {
+              finalStatus = 'dnc'
+            }
+          } catch (err) {
+            if (!isRetryableStatus(err?.status)) throw err
+          }
         }
       }
-    }
-    const entry = buildEntry(finalStatus, terminatedByArg)
-    if (survey?.id) {
-      if (useApi) {
-        const save = isPublic ? savePublicResponse : saveResponseApi
-        save(survey.id, entry).catch(err => console.error('Failed to save response', err))
-      } else {
-        saveResponse(survey.id, entry)
-      }
-    }
-    if (doDownload) {
-      const csv = generateCSV(items, [entry], survey)
-      downloadCSV(csv, `${(survey?.title || 'survey').replace(/\s+/g, '_')}_${finalStatus}.csv`)
-    }
-    return finalStatus
+      const entry = outcome === 'redirect'
+        ? { ...buildEntry('partial'), responses: responseSnapshot ?? responses, redirectedTo: redirectUrl }
+        : buildEntry(finalStatus, terminatedByArg)
+      await commitRecord({
+        entry,
+        outcome,
+        terminatedBy: terminatedByArg,
+        redirectUrl,
+      })
+    })().catch(err => {
+      console.error('Failed to save response', err)
+      saveLock.current = false
+      setHolding('rejected')
+    })
   }
 
-  const persistRedirectResponse = async (url, responseSnapshot, doDownload = false) => {
-    const entry = {
-      ...buildEntry('partial'),
-      responses: responseSnapshot,
-      redirectedTo: url,
-    }
-    if (survey?.id) {
-      if (useApi) {
-        const save = isPublic ? savePublicResponse : saveResponseApi
-        save(survey.id, entry).catch(err => console.error('Failed to save redirect response', err))
-      } else {
-        saveResponse(survey.id, entry)
-      }
-    }
-    if (doDownload) {
-      const csv = generateCSV(items, [entry], survey)
-      downloadCSV(csv, `${(survey?.title || 'survey').replace(/\s+/g, '_')}_redirected.csv`)
-    }
-  }
-
-  const performExternalRedirect = (url, responseSnapshot) => {
-    openExternalRedirect(url)
-    persistRedirectResponse(url, responseSnapshot)
-    setRedirectedTo(url)
+  const downloadCurrent = (status, terminatedByArg, nameSuffix) => {
+    const entry = buildEntry(status, terminatedByArg)
+    if (redirectedTo) entry.redirectedTo = redirectedTo
+    const csv = generateCSV(items, [entry], survey)
+    downloadCSV(csv, `${(survey?.title || 'survey').replace(/\s+/g, '_')}_${nameSuffix}.csv`)
   }
 
   const handleChange = (question, val) => {
@@ -249,9 +301,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       const result = checkTermination(q, responses[q.id], responses, items)
       if (result.terminated) {
         const tb = { questionText: q.text, cause: result.cause, blockTitle: null }
-        setTerminated(true)
-        setTerminatedBy(tb)
-        persistAndDownload('terminated', tb)
+        startSave('terminated', tb)
         return true
       }
     }
@@ -261,9 +311,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       if (block.conditions?.length && evalBlock(block, responses, items)) {
         const cause = buildBlockCause(block, responses, items)
         const tb    = { questionText: null, cause, blockTitle: block.title || 'Termination Block' }
-        setTerminated(true)
-        setTerminatedBy(tb)
-        persistAndDownload('terminated', tb)
+        startSave('terminated', tb)
         return true
       }
     }
@@ -283,7 +331,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
 
     const redirectUrl = resolvePageExternalRedirect(currentQuestions, responses, items)
     if (redirectUrl) {
-      performExternalRedirect(redirectUrl, responses)
+      startSave('redirect', null, redirectUrl, responses)
       return
     }
 
@@ -293,10 +341,26 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       bumpLockVisit()
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
-      setSubmitted(true)
-      persistAndDownload('complete')
+      startSave('complete')
     }
   }
+
+  const commitRef = useRef(commitRecord)
+  commitRef.current = commitRecord
+
+  useEffect(() => {
+    if (!survey?.id || !useApi) return undefined
+    const pending = readPendingResponse(survey.id)
+    if (!pending?.entry) return undefined
+    responseIdRef.current = pending.entry.id || null
+    setResponses(pending.entry.responses || {})
+    setCompanions(pending.entry.companions || {})
+    if (Number.isInteger(pending.entry.pageReached)) setCurrentPage(pending.entry.pageReached)
+    if (pending.terminatedBy) setTerminatedBy(pending.terminatedBy)
+    saveLock.current = true
+    void commitRef.current(pending)
+    return () => { saveGen.current += 1 }
+  }, [survey?.id])
 
   useEffect(() => {
     if (submitted && isEmbed) postCompleted()
@@ -362,7 +426,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       )}
 
       {/* Progress bar */}
-      {showProgressBar && progressTotal > 1 && !terminated && !submitted && !redirectedTo && !showCover && (
+      {showProgressBar && progressTotal > 1 && !terminated && !submitted && !redirectedTo && !showCover && !holding && (
         <div className="bg-white border-b border-ink-100 px-4 sm:px-6 py-2">
           <div className="max-w-2xl mx-auto">
             <div className="flex justify-between text-xs text-ink-400 mb-1.5">
@@ -379,6 +443,12 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       {/* Content */}
       {isPublic && survey?.status === 'closed' ? (
         <ClosedSurveyScreen settings={survey?.settings} />
+      ) : holding ? (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <p className="text-sm text-ink-500 text-center max-w-md">
+            {holding === 'rejected' ? SAVE_REJECTED : holding === 'busy' ? SURVEY_BUSY_SAVE : SAVING_RESPONSE}
+          </p>
+        </div>
       ) : showCover ? (
         <CoverPage survey={survey} onStart={() => { setShowCover(false); bumpLockVisit() }} isPublic={isPublic} />
       ) : redirectedTo ? (
@@ -386,11 +456,11 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
           settings={survey?.settings}
           redirectUrl={redirectedTo}
           onReset={reset}
-          onDownload={() => persistRedirectResponse(redirectedTo, responses, true)}
+          onDownload={() => downloadCurrent('partial', null, 'redirected')}
           isPublic={isPublic}
         />
       ) : terminated ? (
-        <TerminationScreen settings={survey?.settings} terminatedBy={terminatedBy} onReset={reset} onDownload={() => persistAndDownload('terminated', terminatedBy, true)} isPublic={isPublic} />
+        <TerminationScreen settings={survey?.settings} terminatedBy={terminatedBy} onReset={reset} onDownload={() => downloadCurrent('terminated', terminatedBy, 'terminated')} isPublic={isPublic} />
       ) : submitted ? (
         <CompletionScreen settings={survey?.settings} />
       ) : (

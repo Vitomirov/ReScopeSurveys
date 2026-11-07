@@ -31,11 +31,13 @@ services:
       - --save
       - ''
       - --appendonly
-      - 'no'
+      - 'yes'
+      - --appendfsync
+      - everysec
       - --maxmemory
-      - 128mb
+      - 256mb
       - --maxmemory-policy
-      - allkeys-lru
+      - volatile-lru
     expose:
       - '6379'
     healthcheck:

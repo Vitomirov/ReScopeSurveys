@@ -3,13 +3,14 @@
  * Serves live survey definitions by public path or ID, DNC email checks,
  * accepts response submissions, and applies embed CSP headers and branding.
  */
-import { upsertResponse, sendUpsertResult } from './responses.js'
+import { sendUpsertResult } from './responses.js'
 import { clientDomainFromRequest, findPublicSurvey } from '../lib/survey/surveyPublicPath.js'
 import { buildPublicBrandingPayload } from '../lib/branding/publicBranding.js'
 import { readEmbedAllowedOrigins } from '../lib/platform/orgSettings.js'
 import { resolvePlanId } from '../../../shared/planFeatures.js'
 import { buildFrameAncestorsDirective } from '../../../shared/embedProtocol.js'
 import { sendIfRateLimited } from '../lib/survey/rateLimit.js'
+import { countsSurveyWideFetch } from '../lib/survey/publicFetch.js'
 import { isEmailOnDncList, normalizeEmail } from '../lib/survey/dncCheck.js'
 import { assertOrgActive } from '../lib/billing/planEnforcement.js'
 import {
@@ -71,6 +72,36 @@ function publicSurveyPayload(row, branding, { embedOrigins = [] } = {}) {
 
 function surveyIsClosed(row) {
   return row?.survey?.status === 'closed'
+}
+
+function liveCached(row) {
+  return row?.survey?.status === 'live' ? row : null
+}
+
+function slimPublicRow(row) {
+  return {
+    id: row.id,
+    organizationId: row.organizationId,
+    survey: row.survey,
+    items: row.items,
+    revision: row.revision,
+  }
+}
+
+function setWriteCookie(app, request, reply, responseId, issuedWriteKey) {
+  if (!issuedWriteKey || !responseId) return
+  const { cookieSecure } = app.config
+  reply.setCookie(
+    RESPONSE_WRITE_COOKIE,
+    rememberWriteKey(request.cookies?.[RESPONSE_WRITE_COOKIE], responseId, issuedWriteKey),
+    {
+      httpOnly: true,
+      secure: cookieSecure,
+      sameSite: 'lax',
+      path: '/api/public/surveys/',
+      maxAge: 60 * 60 * 24 * 30,
+    },
+  )
 }
 
 async function ensurePublicOrgActive(app, organizationId, reply) {
@@ -157,38 +188,48 @@ async function enforcePublicLimits(
 export async function registerPublicRoutes(app) {
   const limits = app.rateLimits
 
+  async function limitPublicRead(request, reply, { cacheHit, resourceId }) {
+    if (countsSurveyWideFetch(cacheHit)) {
+      return enforcePublicLimits(request, reply, {
+        ipLimiter: limits.publicFetch,
+        resourceLimiter: limits.surveyFetch,
+        scope: 'public-fetch',
+        resourceId,
+      })
+    }
+    return sendIfRateLimited(limits.publicFetch, request, reply, 'public-fetch')
+  }
+
   app.get('/api/public/s/:publicPath', async (request, reply) => {
-    const limited = await enforcePublicLimits(request, reply, {
-      ipLimiter: limits.publicFetch,
-      resourceLimiter: limits.surveyFetch,
-      scope: 'public-fetch',
+    const clientDomain = clientDomainFromRequest(request)
+    const cached = liveCached(app.cache.getPublicPath(clientDomain, request.params.publicPath))
+    const limited = await limitPublicRead(request, reply, {
+      cacheHit: Boolean(cached),
       resourceId: request.params.publicPath,
     })
     if (limited) return limited
+    if (cached) return sendPublicSurvey(app, request, reply, cached)
 
-    const clientDomain = clientDomainFromRequest(request)
     const row = await findPublicSurvey(app.prisma, request.params.publicPath, clientDomain)
     if (!row) return reply.code(404).send({ error: 'Survey not found' })
     if (!(await ensurePublicOrgActive(app, row.organizationId, reply))) return
 
-    app.cache.setLiveSurvey(row.id, {
-      id: row.id,
-      organizationId: row.organizationId,
-      survey: row.survey,
-      items: row.items,
-      revision: row.revision,
-    })
-    return sendPublicSurvey(app, request, reply, row)
+    const slim = slimPublicRow(row)
+    if (slim.survey?.status === 'live') {
+      app.cache.setLiveSurvey(slim.id, slim)
+      app.cache.setPublicPath(clientDomain, request.params.publicPath, slim)
+    }
+    return sendPublicSurvey(app, request, reply, slim)
   })
 
   app.get('/api/public/surveys/:id', async (request, reply) => {
-    const limited = await enforcePublicLimits(request, reply, {
-      ipLimiter: limits.publicFetch,
-      resourceLimiter: limits.surveyFetch,
-      scope: 'public-fetch',
+    const cached = liveCached(app.cache.getLiveSurvey(request.params.id))
+    const limited = await limitPublicRead(request, reply, {
+      cacheHit: Boolean(cached),
       resourceId: request.params.id,
     })
     if (limited) return limited
+    if (cached) return sendPublicSurvey(app, request, reply, cached)
 
     const row = await loadLivePublicSurvey(app, request.params.id, reply)
     if (!row) return
@@ -219,12 +260,7 @@ export async function registerPublicRoutes(app) {
   })
 
   app.post('/api/public/surveys/:id/responses', async (request, reply) => {
-    const limited = await enforcePublicLimits(request, reply, {
-      ipLimiter: limits.responses,
-      resourceLimiter: limits.surveyResponses,
-      scope: 'responses',
-      resourceId: request.params.id,
-    })
+    const limited = await sendIfRateLimited(limits.responses, request, reply, 'responses')
     if (limited) return limited
 
     const row = await loadLivePublicSurvey(app, request.params.id, reply)
@@ -237,32 +273,22 @@ export async function registerPublicRoutes(app) {
     }
 
     const bodyId = typeof entry.id === 'string' ? entry.id.trim() : ''
-    const result = await upsertResponse(app, {
+    const outcome = await app.responseInbox.savePublic({
       surveyId: row.id,
       organizationId: row.organizationId,
       entry,
       surveyItems: row.items || [],
-      publicWriter: {
-        presentedKey: presentedKeyFor(request.cookies?.[RESPONSE_WRITE_COOKIE], bodyId),
-      },
+      presentedKey: presentedKeyFor(request.cookies?.[RESPONSE_WRITE_COOKIE], bodyId),
     })
-    if (sendUpsertResult(reply, result)) return
 
-    if (result.issuedWriteKey) {
-      const { cookieSecure } = app.config
-      reply.setCookie(
-        RESPONSE_WRITE_COOKIE,
-        rememberWriteKey(request.cookies?.[RESPONSE_WRITE_COOKIE], result.row.id, result.issuedWriteKey),
-        {
-          httpOnly: true,
-          secure: cookieSecure,
-          sameSite: 'lax',
-          path: '/api/public/surveys/',
-          maxAge: 60 * 60 * 24 * 30,
-        },
-      )
+    if (outcome.queued) {
+      setWriteCookie(app, request, reply, outcome.id, outcome.issuedWriteKey)
+      return reply.code(202).send({ ok: true, accepted: true, id: outcome.id })
     }
 
+    const result = outcome.result
+    if (sendUpsertResult(reply, result)) return
+    setWriteCookie(app, request, reply, result.row.id, result.issuedWriteKey)
     return { ok: true, id: result.row.id }
   })
 }

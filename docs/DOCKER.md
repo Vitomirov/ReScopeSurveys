@@ -108,7 +108,7 @@ docker compose up -d
 | Seed accounts | Yes (`admin/admin123`) | No — signup only |
 | `COOKIE_SECURE` | `false` | `true` |
 | Web port bind | `0.0.0.0:8080` | `127.0.0.1:8080` |
-| Redis | Not included | Required for rate limits |
+| Redis | Not included | Required. Rate-limit counters, plus the public-finish stream (`appendonly yes`, `volatile-lru`, 256 MB) |
 | `REQUIRE_STRONG_JWT` | Off | On |
 | Rate limits | Relaxed | Production quotas |
 

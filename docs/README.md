@@ -66,7 +66,7 @@ A customer runs the full stack on **their** server with **their** database. Data
 |------|----------|
 | `docker-compose.yml` | Base stack — Postgres, API, web. Partner demo or foundation for overrides |
 | `docker-compose.dev.yml` | Local npm dev — exposes Postgres on `localhost:5433` |
-| `docker-compose.prod.yml` | Production — no seed accounts, secure cookies, web bound to loopback only, Redis for rate limits |
+| `docker-compose.prod.yml` | Production — no seed accounts, secure cookies, web bound to loopback only, Redis for rate limits and the public-finish queue |
 | `docker-compose.load.yml` | Load testing — 2 CPU / 4 GB caps + k6 runner (separate project) |
 
 Typical commands:

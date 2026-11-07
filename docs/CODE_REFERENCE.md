@@ -134,6 +134,7 @@ Dual-mode stores branch on `useApi` (`src/config/api.js`):
 |--------|------------|----------|
 | `surveyLibrary.js` | localStorage | `api/surveys.js` |
 | `responseStore.js` | localStorage | `api/responses.js` |
+| `pendingResponse.js` | — | One `sessionStorage` copy of an in-flight public finish, plus retry delay |
 | `authStore.js` | localStorage credentials | HttpOnly cookies + sessionStorage |
 | `dncStore.js` | localStorage | `api/dnc.js` |
 | `platformStore.js` | localStorage | `api/platform.js` |

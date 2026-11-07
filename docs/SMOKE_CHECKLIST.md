@@ -66,6 +66,7 @@ Use a survey with **at least one of each** question type when possible.
 
 - [ ] Valid survey ID loads taker (no login)
 - [ ] Invalid ID shows "Survey not found"
+- [ ] Finish shows "Saving your response…" and then the existing completion screen
 - [ ] Closed survey shows closed screen
 - [ ] Draft survey behavior matches expectation
 - [ ] Complete survey — response saved (check Export Manager)

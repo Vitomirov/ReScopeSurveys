@@ -9,6 +9,7 @@ import cookie from '@fastify/cookie'
 import { registerPrisma } from './plugins/prisma.js'
 import { registerHotCache } from './plugins/hotCache.js'
 import { registerRateLimits } from './plugins/rateLimits.js'
+import { registerResponseInbox } from './lib/survey/responseInbox.js'
 import { registerCsrf } from './plugins/csrf.js'
 import { registerAuth } from './plugins/auth.js'
 import { registerMailer } from './plugins/mailer.js'
@@ -61,6 +62,7 @@ export async function buildApp() {
   await registerPrisma(app)
   await registerHotCache(app)
   await registerRateLimits(app, config)
+  await registerResponseInbox(app)
   await registerMailer(app, config)
   await registerCsrf(app, config)
   await registerAuth(app, {
