@@ -133,7 +133,7 @@ export function ImageChoiceEditor({ question, dispatch }) {
     updateCfg({ imageOptions: cfg.imageOptions.filter(o => o.id !== id) })
 
   const addOption = () =>
-    updateCfg({ imageOptions: [...cfg.imageOptions, makeImageOption(`Option ${cfg.imageOptions.length + 1}`)] })
+    updateCfg({ imageOptions: [...cfg.imageOptions, makeImageOption()] })
 
   const withoutImage = cfg.imageOptions.filter(o => !o.image).length
 

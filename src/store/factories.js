@@ -75,7 +75,7 @@ export const makeQuestion = (questionType = 'single_select') => {
     visibility: makeVisibilityConfig(),
 
     options: isChoice
-      ? [makeOption('Option 1'), makeOption('Option 2'), makeOption('Option 3')]
+      ? [makeOption()]
       : [],
     minSelections: null,
     maxSelections: null,
@@ -246,9 +246,7 @@ export const makeQuestion = (questionType = 'single_select') => {
       columns:      3,
       showLabels:   true,
       imageOptions: [
-        makeImageOption('Option 1'),
-        makeImageOption('Option 2'),
-        makeImageOption('Option 3'),
+        makeImageOption(),
       ],
       instruction: '',
     },

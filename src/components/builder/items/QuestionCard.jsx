@@ -139,7 +139,7 @@ export const QuestionCard = memo(function QuestionCard({
     if (!willChoice && wasChoice) {
       patch.options = []
     } else if (willChoice && !wasChoice) {
-      patch.options = [makeOption('Option 1'), makeOption('Option 2'), makeOption('Option 3')]
+      patch.options = [makeOption()]
     }
     dispatch({ type: 'UPDATE_ITEM', id: question.id, patch })
   }
