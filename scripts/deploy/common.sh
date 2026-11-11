@@ -92,7 +92,7 @@ web_health_url() {
 }
 
 validate_production_env() {
-  local jwt_secret postgres_password cors_origin smtp_url panel_secret panel_redirect
+  local jwt_secret totp_key postgres_password cors_origin smtp_url panel_secret panel_redirect
 
   [[ -f "$ENV_FILE" ]] || fail ".env not found in $ROOT — run: ./scripts/deploy/init-env.sh"
 
@@ -100,6 +100,8 @@ validate_production_env() {
   postgres_password="$(env_value POSTGRES_PASSWORD)"
 
   [[ -n "$jwt_secret" ]] || fail "JWT_SECRET is missing or empty in .env — run: ./scripts/deploy/init-env.sh"
+  totp_key="$(env_value TOTP_ENCRYPTION_KEY)"
+  [[ ${#totp_key} -ge 16 ]] || fail "TOTP_ENCRYPTION_KEY is missing or shorter than 16 characters in .env — authenticator enrollment cannot run."
   (( ${#jwt_secret} >= MIN_JWT_SECRET_LENGTH )) || fail "JWT_SECRET is shorter than ${MIN_JWT_SECRET_LENGTH} characters — the API refuses weak secrets in production."
   case "$jwt_secret" in
     *change-me*|*dev-secret*|*load-test-secret*|*not-for-production*|*example*)

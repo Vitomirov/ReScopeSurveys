@@ -163,6 +163,7 @@ Store `POSTGRES_PASSWORD` securely off the server. Changing it in `.env` later d
 |----------|---------|
 | `POSTGRES_PASSWORD` | Database password (strong, random) |
 | `JWT_SECRET` | 32+ characters; required in production |
+| `TOTP_ENCRYPTION_KEY` | Seals authenticator secrets. Required before two-factor enrollment. Losing it makes enrolled secrets unreadable |
 | `INTERNAL_API_SECRET` | Protects Caddy on-demand TLS ask endpoint |
 | `CORS_ORIGIN` | Comma-separated HTTPS origins — must include every app host |
 | `SMTP_URL` | Outbound mail for invites, email confirmation, and password reset (`smtps://user:pass@host:465`). **Required** — the API refuses to start in production without it |

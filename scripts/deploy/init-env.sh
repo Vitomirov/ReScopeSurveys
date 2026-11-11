@@ -44,6 +44,7 @@ fi
 
 postgres_password="$(openssl rand -base64 24 | tr -d '/+=')"
 jwt_secret="$(openssl rand -base64 48 | tr -d '\n')"
+totp_encryption_key="$(openssl rand -base64 48 | tr -d '\n')"
 panel_oauth_secret="$(openssl rand -base64 32 | tr -d '/+=\n')"
 dockerhub_user="${DOCKERHUB_USER:-$DEFAULT_DOCKERHUB_USER}"
 image_tag="${IMAGE_TAG:-latest}"
@@ -68,6 +69,7 @@ POSTGRES_DB=rescopesurveys
 POSTGRES_PASSWORD=${postgres_password}
 
 JWT_SECRET=${jwt_secret}
+TOTP_ENCRYPTION_KEY=${totp_encryption_key}
 
 CORS_ORIGIN=https://app.rescopesurveys.com,https://rescopesurveys.com,https://www.rescopesurveys.com,https://surveys.rescopesurveys.com
 
