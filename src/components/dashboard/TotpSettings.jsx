@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
 import { apiFetch } from '@/api/client'
 
 /**
@@ -8,6 +9,7 @@ export function TotpSettings() {
   const [enabled, setEnabled] = useState(false)
   const [secret, setSecret] = useState('')
   const [otpauth, setOtpauth] = useState('')
+  const [qr, setQr] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -20,6 +22,18 @@ export function TotpSettings() {
       .catch(() => {})
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (!otpauth) {
+      setQr('')
+      return
+    }
+    let cancelled = false
+    QRCode.toDataURL(otpauth, { margin: 1, width: 180, errorCorrectionLevel: 'M' })
+      .then((url) => { if (!cancelled) setQr(url) })
+      .catch(() => { if (!cancelled) setQr('') })
+    return () => { cancelled = true }
+  }, [otpauth])
 
   async function start() {
     setError('')
@@ -97,8 +111,19 @@ export function TotpSettings() {
         </div>
       ) : secret ? (
         <div className="mt-3 space-y-2">
-          <p className="text-xs text-ink-600 break-all">Secret: {secret}</p>
-          <p className="text-xs text-ink-400 break-all">{otpauth}</p>
+          <p className="text-xs text-ink-600 leading-relaxed">
+            Scan this with Google Authenticator, Authy, or 1Password, then enter the 6-digit code.
+          </p>
+          {qr && (
+            <img
+              src={qr}
+              alt="Authenticator QR code"
+              width={180}
+              height={180}
+              className="rounded-lg border border-ink-100 bg-white"
+            />
+          )}
+          <p className="text-xs text-ink-400 break-all">Manual key: {secret}</p>
           <input
             type="text"
             inputMode="numeric"
