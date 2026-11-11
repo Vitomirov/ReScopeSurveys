@@ -300,7 +300,7 @@ authentication**. Add a stable key to an existing production `.env` and
 recreate the API:
 
 ```bash
-printf '\nMFA_ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env
+printf '\nTOTP_ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env
 chmod 600 .env
 docker compose up -d --force-recreate api
 ```
