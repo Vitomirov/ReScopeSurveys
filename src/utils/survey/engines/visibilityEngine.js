@@ -2,26 +2,13 @@
 // Uses conditionEngine for all condition matching — same logic as termination
 // blocks, so survey creators only need one mental model for AND/OR rules.
 
-import { isChoiceType, buildQuestionNumberById } from '../questions/questionHelpers.js'
-import { evalConditionSet } from './conditionEngine.js'
+import { buildQuestionNumberById } from '../questions/questionHelpers.js'
+import { isItemVisible } from './itemVisibility.js'
 import {
   formatConditionPhraseBlockStyle,
   joinConditionPhrasesInline,
 } from '../conditions/conditionSummary.js'
 import { resolveNavigationLockSeconds } from '../../../constants/navigationLock.js'
-
-/**
- * Returns true if `item` (a question, page_break, or group) should be
- * visible given the current `responses`. Items with no visibility config,
- * or visibility disabled, are always visible.
- */
-function isItemVisible(item, responses, allItems) {
-  const vis = item?.visibility
-  if (!vis || !vis.enabled || !vis.conditions?.length) return true
-
-  const matched = evalConditionSet(vis.conditions, responses, allItems)
-  return vis.mode === 'hide_if' ? !matched : matched
-}
 
 /**
  * Termination blocks evaluate when the respondent leaves the page that holds

@@ -5,6 +5,8 @@ import {
   ArrowLeftRight as ArrowLR, Layers as LayersIcon, Image as ImageIcon,
 } from 'lucide-react'
 
+export { isChoiceType, isMatrixType } from './questionTypeFlags.js'
+
 export const QUESTION_TYPES = [
   {
     type: 'single_select',
@@ -165,11 +167,6 @@ export const QUESTION_TYPE_KEYS = QUESTION_TYPES.map(t => t.type)
 
 export const getTypeMeta = (type) =>
   QUESTION_TYPES.find(t => t.type === type) || QUESTION_TYPES[0]
-
-export const isChoiceType = (type) =>
-  ['single_select', 'multi_select', 'dropdown'].includes(type)
-
-export const isMatrixType = (type) => type === 'matrix'
 
 export const TYPE_ICONS = {
   single_select:       CircleDot,

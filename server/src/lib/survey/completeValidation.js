@@ -1,9 +1,11 @@
 /**
  * Server-side gates for finalizing a response as complete (or client-claimed dnc).
  * Closes empty-complete forgery and DNC bypass by omitting the email answer.
- * Does not re-run the full client visibility/termination engines.
+ * Required and email answers are enforced only for questions visible given the
+ * submitted answers (same show/hide rules as the taker). Termination is not re-run.
  */
 import { extractResponseEmail, findEmailQuestion } from './dncCheck.js'
+import { visibleQuestionIds } from '../../../../src/utils/survey/engines/itemVisibility.js'
 
 export function isAnswerEmpty(answer) {
   if (answer === null || answer === undefined || answer === '') return true
@@ -28,18 +30,20 @@ export function validateCompleteAnswers(entry, surveyItems = []) {
     ? entry.responses
     : {}
 
-  if (findEmailQuestion(surveyItems) && !extractResponseEmail(entry, surveyItems)) {
+  const visible = visibleQuestionIds(surveyItems, responses)
+  const emailQuestion = findEmailQuestion(surveyItems)
+  if (emailQuestion && visible.has(emailQuestion.id) && !extractResponseEmail(entry, surveyItems)) {
     return { ok: false, code: 'EMAIL_REQUIRED' }
   }
 
   for (const question of questions) {
-    if (!question.required) continue
+    if (!question.required || !visible.has(question.id)) continue
     if (isAnswerEmpty(responses[question.id])) {
       return { ok: false, code: 'INCOMPLETE_ANSWERS' }
     }
   }
 
-  const anyAnswer = questions.some(q => !isAnswerEmpty(responses[q.id]))
+  const anyAnswer = questions.some(q => visible.has(q.id) && !isAnswerEmpty(responses[q.id]))
   if (!anyAnswer) {
     return { ok: false, code: 'INCOMPLETE_ANSWERS' }
   }

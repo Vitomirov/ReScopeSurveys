@@ -3,7 +3,7 @@
  * Run with: node --test scripts/phase-security-complete.test.mjs
  * Integration cases require API on PORT from .env (default 3003) and Postgres.
  */
-import { test, before } from 'node:test'
+import { test, before, describe } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -85,8 +85,143 @@ test('validateCompleteAnswers requires email when isEmailField is set', () => {
   assert.deepEqual(ok, { ok: true })
 })
 
-// ─── Integration ────────────────────────────────────────────────────────────
+const BRANCH = 'q_branch_vis'
+const OPT_A = 'opt-a'
+const OPT_B = 'opt-b'
 
+function branchQuestion() {
+  return {
+    id: BRANCH,
+    itemType: 'question',
+    questionType: 'single_select',
+    required: true,
+  }
+}
+
+function gatedQuestion(id, mode, optionId) {
+  return {
+    id,
+    itemType: 'question',
+    questionType: 'text',
+    required: true,
+    visibility: {
+      enabled: true,
+      mode,
+      conditions: [{ questionId: BRANCH, conditionType: 'any_of', optionIds: [optionId] }],
+    },
+  }
+}
+
+function skipSurvey(mode, optionId) {
+  return [
+    branchQuestion(),
+    gatedQuestion('q_skip_2', mode, optionId),
+    gatedQuestion('q_skip_3', mode, optionId),
+    gatedQuestion('q_skip_4', mode, optionId),
+  ]
+}
+
+test('validateCompleteAnswers accepts a show_if skip when the gated questions stay hidden', () => {
+  const items = skipSurvey('show_if', OPT_A)
+  const result = validateCompleteAnswers({ responses: { [BRANCH]: OPT_B } }, items)
+  assert.deepEqual(result, { ok: true })
+})
+
+test('validateCompleteAnswers still requires show_if questions when they are visible', () => {
+  const items = skipSurvey('show_if', OPT_A)
+  const missing = validateCompleteAnswers({ responses: { [BRANCH]: OPT_A } }, items)
+  assert.equal(missing.ok, false)
+  assert.equal(missing.code, 'INCOMPLETE_ANSWERS')
+
+  const filled = validateCompleteAnswers({
+    responses: {
+      [BRANCH]: OPT_A,
+      q_skip_2: 'a',
+      q_skip_3: 'b',
+      q_skip_4: 'c',
+    },
+  }, items)
+  assert.deepEqual(filled, { ok: true })
+})
+
+test('validateCompleteAnswers accepts a hide_if skip and still requires those questions otherwise', () => {
+  const items = skipSurvey('hide_if', OPT_B)
+  const skipped = validateCompleteAnswers({ responses: { [BRANCH]: OPT_B } }, items)
+  assert.deepEqual(skipped, { ok: true })
+
+  const shown = validateCompleteAnswers({ responses: { [BRANCH]: OPT_A } }, items)
+  assert.equal(shown.ok, false)
+  assert.equal(shown.code, 'INCOMPLETE_ANSWERS')
+})
+
+test('validateCompleteAnswers skips required questions inside a hidden group', () => {
+  const items = [
+    branchQuestion(),
+    {
+      id: 'g_skip',
+      itemType: 'group',
+      visibility: {
+        enabled: true,
+        mode: 'show_if',
+        conditions: [{ questionId: BRANCH, conditionType: 'any_of', optionIds: [OPT_A] }],
+      },
+    },
+    { id: 'q_skip_2', itemType: 'question', questionType: 'text', required: true },
+    { id: 'q_skip_3', itemType: 'question', questionType: 'text', required: true },
+    { id: 'q_skip_4', itemType: 'question', questionType: 'text', required: true },
+  ]
+  const skipped = validateCompleteAnswers({ responses: { [BRANCH]: OPT_B } }, items)
+  assert.deepEqual(skipped, { ok: true })
+
+  const shown = validateCompleteAnswers({ responses: { [BRANCH]: OPT_A } }, items)
+  assert.equal(shown.ok, false)
+  assert.equal(shown.code, 'INCOMPLETE_ANSWERS')
+})
+
+test('validateCompleteAnswers still rejects when every question is hidden and unanswered', () => {
+  const items = [{
+    id: 'q_only_hidden',
+    itemType: 'question',
+    questionType: 'text',
+    required: false,
+    visibility: {
+      enabled: true,
+      mode: 'show_if',
+      conditions: [{ questionId: 'q_missing', conditionType: 'any_of', optionIds: ['x'] }],
+    },
+  }]
+  const result = validateCompleteAnswers({ responses: {} }, items)
+  assert.equal(result.ok, false)
+  assert.equal(result.code, 'INCOMPLETE_ANSWERS')
+})
+
+test('validateCompleteAnswers does not require an email question hidden by visibility', () => {
+  const items = [
+    branchQuestion(),
+    {
+      id: 'q_email_hidden',
+      itemType: 'question',
+      questionType: 'text',
+      isEmailField: true,
+      required: true,
+      visibility: {
+        enabled: true,
+        mode: 'show_if',
+        conditions: [{ questionId: BRANCH, conditionType: 'any_of', optionIds: [OPT_A] }],
+      },
+    },
+  ]
+  const skipped = validateCompleteAnswers({ responses: { [BRANCH]: OPT_B } }, items)
+  assert.deepEqual(skipped, { ok: true })
+
+  const shown = validateCompleteAnswers({ responses: { [BRANCH]: OPT_A } }, items)
+  assert.equal(shown.ok, false)
+  assert.equal(shown.code, 'EMAIL_REQUIRED')
+})
+
+// ─── Integration (needs the API; unit cases above do not) ───────────────────
+
+describe('public complete API', () => {
 before(async () => {
   const res = await api('/health')
   assert.ok(res.data?.ok, `API not reachable at ${BASE}`)
@@ -209,4 +344,5 @@ test('partial responses remain allowed with empty answers', async () => {
     body: entry(randomUUID(), 'partial', {}),
   })
   assert.equal(res.status, 200, JSON.stringify(res.data))
+})
 })

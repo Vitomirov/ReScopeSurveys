@@ -3,7 +3,7 @@
 // termination blocks, and any future rule types). AND binds tighter than OR:
 // A AND B OR C = (A AND B) OR C
 
-import { isChoiceType, isMatrixType } from '../questions/questionHelpers.js'
+import { isChoiceType, isMatrixType } from '../questions/questionTypeFlags.js'
 import {
   isMatrixAnswerEmpty,
   evalMatrixSelection,
