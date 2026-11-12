@@ -194,9 +194,9 @@ Enterprise is a **subscription tier** on your multi-tenant platform, not a separ
 ### Customer admin workflow (after you upgrade them)
 
 1. Open billing → **Custom domain verification**.
-2. Click **Initialize** — receive TXT record instructions.
-3. Add `_rescope-verify.client.com` TXT at their DNS provider.
-4. Add `A` record: `surveys.client.com` → your VPS IP.
+2. Click **Generate DNS record**. The screen shows two records.
+3. At their DNS provider, add CNAME `surveys.client.com` → `surveys.rescopesurveys.com`.
+4. Add TXT `_rescope-verify.client.com` with the value shown.
 5. Click **Check DNS** until status is `verified`.
 6. Shareable survey URLs now use `https://surveys.client.com/{publicPath}`.
 

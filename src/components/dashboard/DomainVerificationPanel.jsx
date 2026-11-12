@@ -54,7 +54,7 @@ export function DomainVerificationPanel({ onClose, embedded = false }) {
       if (data.domainVerification.status === 'verified') {
         toast({ message: 'Domain verified', type: 'success' })
       } else {
-        toast({ message: 'DNS record not found yet', type: 'info' })
+        toast({ message: data.domainVerification.failureReason || 'DNS records not found yet', type: 'info' })
       }
     } catch (err) {
       toast({ message: err.message || 'Verification check failed', type: 'error' })
@@ -95,11 +95,17 @@ export function DomainVerificationPanel({ onClose, embedded = false }) {
         </p>
       )}
 
-      {verification?.txtRecord && (
+      {verification?.txtValue && (
         <div className="text-sm bg-ink-50 border border-ink-200 rounded-lg p-3 mb-4 space-y-2">
+          <p className="text-ink-600">Add both records at your DNS provider.</p>
+          <p><span className="font-medium">CNAME host:</span> <code>{verification.cnameHost}</code></p>
+          <p><span className="font-medium">CNAME value:</span> <code>{verification.cnameValue}</code></p>
           <p><span className="font-medium">TXT host:</span> <code>{verification.txtRecord}</code></p>
           <p><span className="font-medium">TXT value:</span> <code>{verification.txtValue}</code></p>
           <p className="text-ink-500">Status: <strong>{verification.status}</strong></p>
+          {verification.failureReason && (
+            <p className="text-rose-600">{verification.failureReason}</p>
+          )}
         </div>
       )}
 
