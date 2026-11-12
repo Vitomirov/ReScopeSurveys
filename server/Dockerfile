@@ -10,6 +10,8 @@ RUN npm ci
 
 COPY server/src ./src
 COPY shared /app/shared
+# Complete-validation reuses the taker visibility/condition engines (no lucide in that tree).
+COPY src/utils/survey /app/src/utils/survey
 COPY docker/api-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
