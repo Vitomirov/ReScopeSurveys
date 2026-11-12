@@ -195,8 +195,8 @@ Enterprise is a **subscription tier** on your multi-tenant platform, not a separ
 
 1. Open billing → **Custom domain verification**.
 2. Click **Generate DNS record**. The screen shows two records.
-3. At their DNS provider, add CNAME `surveys.client.com` → `surveys.rescopesurveys.com`.
-4. Add TXT `_rescope-verify.client.com` with the value shown.
+3. At their DNS provider, add CNAME host `surveys`, value `surveys.rescopesurveys.com`.
+4. Add TXT host `_rescope-verify` with the value shown. Type only those short names in Host.
 5. Click **Check DNS** until status is `verified`.
 6. Shareable survey URLs now use `https://surveys.client.com/{publicPath}`.
 

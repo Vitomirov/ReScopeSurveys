@@ -4,14 +4,18 @@ import { RESCOPESURVEYS_HOST } from './surveyUrl.js'
 
 export const DOMAIN_VERIFICATION_STATUSES = ['pending', 'verified', 'failed']
 
+/** Short names typed into the DNS host field. The provider appends the domain. */
+export const SURVEY_DNS_CNAME_HOST = 'surveys'
+export const SURVEY_DNS_TXT_HOST = '_rescope-verify'
+
 /** Client CNAME target. The server address stays on this host. */
-export const SURVEY_CNAME_TARGET = `surveys.${RESCOPESURVEYS_HOST}`
+export const SURVEY_CNAME_TARGET = `${SURVEY_DNS_CNAME_HOST}.${RESCOPESURVEYS_HOST}`
 
 function routingRecords(domain) {
   const host = String(domain || '').trim().toLowerCase()
   if (!host) return { cnameHost: '', cnameValue: '' }
   return {
-    cnameHost: `surveys.${host}`,
+    cnameHost: `${SURVEY_DNS_CNAME_HOST}.${host}`,
     cnameValue: SURVEY_CNAME_TARGET,
   }
 }
@@ -21,7 +25,7 @@ export function defaultDomainVerification(domain) {
     domain: domain || '',
     status: 'pending',
     ...routingRecords(domain),
-    txtRecord: domain ? `_rescope-verify.${domain}` : '',
+    txtRecord: domain ? `${SURVEY_DNS_TXT_HOST}.${domain}` : '',
     txtValue: '',
     verifiedAt: null,
     lastCheckedAt: null,
@@ -37,7 +41,7 @@ export function normalizeDomainVerification(input, { domain } = {}) {
     domain: host,
     status,
     ...routingRecords(host),
-    txtRecord: raw.txtRecord || (host ? `_rescope-verify.${host}` : ''),
+    txtRecord: raw.txtRecord || (host ? `${SURVEY_DNS_TXT_HOST}.${host}` : ''),
     txtValue: String(raw.txtValue || '').trim(),
     verifiedAt: raw.verifiedAt || null,
     lastCheckedAt: raw.lastCheckedAt || null,

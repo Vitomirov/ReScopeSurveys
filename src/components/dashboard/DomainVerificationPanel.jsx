@@ -7,6 +7,7 @@ import {
   checkDomainVerification,
 } from '@/api/platform/billing'
 import { InlineLoader, useToast } from '@/components/ui'
+import { SURVEY_DNS_CNAME_HOST, SURVEY_DNS_TXT_HOST } from '@shared/domainVerification.js'
 
 export function DomainVerificationPanel({ onClose, embedded = false }) {
   const { toast } = useToast()
@@ -96,12 +97,22 @@ export function DomainVerificationPanel({ onClose, embedded = false }) {
       )}
 
       {verification?.txtValue && (
-        <div className="text-sm bg-ink-50 border border-ink-200 rounded-lg p-3 mb-4 space-y-2">
-          <p className="text-ink-600">Add both records at your DNS provider.</p>
-          <p><span className="font-medium">CNAME host:</span> <code>{verification.cnameHost}</code></p>
-          <p><span className="font-medium">CNAME value:</span> <code>{verification.cnameValue}</code></p>
-          <p><span className="font-medium">TXT host:</span> <code>{verification.txtRecord}</code></p>
-          <p><span className="font-medium">TXT value:</span> <code>{verification.txtValue}</code></p>
+        <div className="text-sm bg-ink-50 border border-ink-200 rounded-lg p-3 mb-4 space-y-3">
+          <p className="text-ink-700">
+            Add these two records in the DNS settings for <strong>{surveyDomain}</strong>.
+          </p>
+          <DnsRecord
+            title="Record 1"
+            type="CNAME"
+            host={SURVEY_DNS_CNAME_HOST}
+            value={verification.cnameValue}
+          />
+          <DnsRecord
+            title="Record 2"
+            type="TXT"
+            host={SURVEY_DNS_TXT_HOST}
+            value={verification.txtValue}
+          />
           <p className="text-ink-500">Status: <strong>{verification.status}</strong></p>
           {verification.failureReason && (
             <p className="text-rose-600">{verification.failureReason}</p>
@@ -120,6 +131,17 @@ export function DomainVerificationPanel({ onClose, embedded = false }) {
           <button type="button" onClick={onClose} className="btn-ghost">Close</button>
         )}
       </div>
+    </div>
+  )
+}
+
+function DnsRecord({ title, type, host, value }) {
+  return (
+    <div className="space-y-1">
+      <p className="font-medium text-ink-800">{title}</p>
+      <p><span className="font-medium">Type:</span> {type}</p>
+      <p><span className="font-medium">Host:</span> <code>{host}</code></p>
+      <p><span className="font-medium">Value:</span> <code className="break-all">{value}</code></p>
     </div>
   )
 }
