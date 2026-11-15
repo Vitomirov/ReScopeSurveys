@@ -548,12 +548,16 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
           onOpenTeamMembers={() => setShowTeamMembers(true)}
           onOpenTeamActivity={() => setShowTeamActivity(true)}
             notifications={{
-              payload: notifications.payload,
+              payload: notifications.unread,
               loading: notifications.loading,
               error: notifications.error,
               onRetry: notifications.refresh,
               onOpen: notifications.refresh,
               onSelect: (surveyId) => onOpenSurvey(surveyId, { export: true }),
+              onMarkRead: (surveyId) => notifications.markRead([surveyId]),
+              onMarkAllRead: () => notifications.markRead(
+                (notifications.unread?.feed || []).map(item => item.surveyId)
+              ),
             }}
           />
       </Suspense>

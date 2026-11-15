@@ -2,16 +2,22 @@
 // Single source of truth for per-question answer validation in the taker.
 // Returns an error string, or null when the answer is valid.
 
-import { isValidPhoneNumber } from 'libphonenumber-js'
+function phoneNumberText(answer) {
+  if (answer && typeof answer === 'object') return answer.number
+  return answer
+}
 
 export function validateAnswer(question, answer) {
+  if (question.questionType === 'phone') {
+    if (question.required && !String(phoneNumberText(answer) ?? '').trim()) {
+      return 'This question is required.'
+    }
+    return null
+  }
+
   if (question.required && (answer === null || answer === undefined || answer === '' ||
     (Array.isArray(answer) && answer.length === 0))) {
     return 'This question is required.'
-  }
-
-  if (question.questionType === 'phone' && answer && !isValidPhoneNumber(answer)) {
-    return 'Please enter a valid phone number for the selected country.'
   }
   if (question.questionType === 'open_text' && answer) {
     const v = question.openTextConfig?.validation

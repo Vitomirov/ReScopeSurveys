@@ -132,9 +132,9 @@ model Survey {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy    User?        @relation("SurveyCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  responses    Response[]
+  responses     Response[]
   surveyExports SurveyExport[]
-  dncEntries   DncEntry[]
+  dncEntries    DncEntry[]
 
   @@unique([publicPath])
   @@index([organizationId])

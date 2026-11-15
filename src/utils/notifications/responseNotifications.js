@@ -21,6 +21,7 @@ export {
   buildNotificationsPayload,
   formatBadgeCount,
   formatRelativeTime,
+  hideReadNotifications,
   feedMessage,
   surveysTabLabel,
   surveyIdOf,

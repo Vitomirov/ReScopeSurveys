@@ -10,6 +10,8 @@ export function NotificationBell({
   onRetry,
   onOpen,
   onSelect,
+  onMarkRead,
+  onMarkAllRead,
 }) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('all')
@@ -75,6 +77,8 @@ export function NotificationBell({
             setOpen(false)
             onSelect(surveyId)
           }}
+          onMarkRead={onMarkRead}
+          onMarkAllRead={onMarkAllRead}
         />
       )}
     </div>

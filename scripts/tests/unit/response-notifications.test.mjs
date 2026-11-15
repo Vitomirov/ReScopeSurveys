@@ -15,6 +15,7 @@ import {
   formatBadgeCount,
   formatRelativeTime,
   feedMessage,
+  hideReadNotifications,
 } from '../../../shared/responseNotifications.js'
 
 const T0 = '2026-08-01T10:00:00.000Z'
@@ -139,6 +140,22 @@ test('buildNotificationsPayload totals new counts across visible surveys', () =>
   assert.equal(payload.totalNew, 3)
   assert.equal(payload.bySurvey.length, 2)
   assert.equal(payload.feed.length, 2)
+})
+
+test('hideReadNotifications drops surveys read at or after their latest response', () => {
+  const payload = buildNotificationsPayload(
+    [{ id: 's1', title: 'A' }, { id: 's2', title: 'B' }],
+    {
+      newBySurvey: {
+        s1: { newCount: 2, latestAt: T1 },
+        s2: { newCount: 1, latestAt: T3 },
+      },
+    }
+  )
+  const hidden = hideReadNotifications(payload, { s1: T2 })
+  assert.equal(hidden.feed.length, 1)
+  assert.equal(hidden.feed[0].surveyId, 's2')
+  assert.equal(hidden.totalNew, 1)
 })
 
 test('formatBadgeCount caps at 9+', () => {

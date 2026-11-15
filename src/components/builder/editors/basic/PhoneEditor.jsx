@@ -7,7 +7,7 @@ export function PhoneEditor({ question, dispatch, allItems = [], itemIndex = 0 }
       dispatch={dispatch}
       allItems={allItems}
       itemIndex={itemIndex}
-      terminationHint="Terminate based on the phone number. Rules use the stored value, for example +447700900123."
+      terminationHint="Terminate based on the number the respondent typed."
       branchHint="Jump respondents when their phone answer matches a rule."
       redirectHint="Send respondents externally when their phone answer matches a rule."
     />

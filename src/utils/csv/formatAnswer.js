@@ -1,4 +1,5 @@
 import { COMPANION_SEP, MULTI_SEP } from './constants'
+import { formatPhoneAnswer } from '../format/phoneSurveyFormat.js'
 
 /** Format one question's answer into a cell string for response export. */
 export function formatAnswer(question, responses, companions) {
@@ -30,7 +31,7 @@ export function formatAnswer(question, responses, companions) {
 
     case 'open_text': return answer ?? ''
     case 'date':      return answer ?? ''
-    case 'phone':     return answer ?? ''
+    case 'phone':     return formatPhoneAnswer(answer)
     case 'slider':    return answer != null ? String(answer) : ''
 
     case 'constant_sum': {

@@ -1,9 +1,4 @@
-import {
-  AsYouType,
-  getCountries,
-  getCountryCallingCode,
-  parsePhoneNumberFromString,
-} from 'libphonenumber-js'
+import { getCountries, getCountryCallingCode } from 'libphonenumber-js'
 
 const PRIORITY_COUNTRIES = ['GB', 'US']
 
@@ -42,25 +37,11 @@ export function getSortedPhoneCountries() {
   return sortedCountriesCache
 }
 
-export function formatPhoneAsYouType(rawInput, countryIso) {
-  if (!countryIso) return rawInput ?? ''
-  return new AsYouType(countryIso).input(String(rawInput ?? ''))
-}
-
-export function parsePhoneToE164(rawInput, countryIso) {
-  if (!countryIso || !rawInput?.trim()) return null
-  const parsed = parsePhoneNumberFromString(rawInput, countryIso)
-  if (!parsed || !parsed.isValid()) return null
-  return parsed.number
-}
-
-export function countryFromE164(value) {
-  if (!value) return null
-  return parsePhoneNumberFromString(value)?.country || null
-}
-
-export function examplePlaceholderForCountry(countryIso) {
-  if (countryIso === 'US') return '(555) 123-4567'
-  if (countryIso === 'GB') return '07700 900123'
-  return 'Phone number'
+/** Country plus the number exactly as typed. No length or format check. */
+export function formatPhoneAnswer(answer) {
+  if (answer == null || answer === '') return ''
+  if (typeof answer !== 'object') return String(answer)
+  const country = getSortedPhoneCountries().find(c => c.iso === answer.country)
+  const number = String(answer.number || '').trim()
+  return [country?.dialCode, number].filter(Boolean).join(' ')
 }

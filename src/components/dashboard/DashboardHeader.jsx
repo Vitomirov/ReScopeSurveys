@@ -158,6 +158,8 @@ export function DashboardHeader({
                     onRetry={notifications?.onRetry}
                     onOpen={notifications?.onOpen}
                     onSelect={notifications?.onSelect}
+                    onMarkRead={notifications?.onMarkRead}
+                    onMarkAllRead={notifications?.onMarkAllRead}
                   />
                 )}
                 <UserMenu

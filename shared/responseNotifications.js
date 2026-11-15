@@ -142,6 +142,24 @@ export function buildNotificationFeed(surveys, { newBySurvey = {} } = {}) {
   return items
 }
 
+/** Drop feed rows already covered by a read cursor (latest activity at or before readAt). */
+export function hideReadNotifications(payload, reads = {}) {
+  const feed = (payload?.feed || []).filter(item => !isCoveredByRead(item, reads))
+  const bySurvey = (payload?.bySurvey || []).filter(item => !isCoveredByRead(item, reads))
+  const totalNew = bySurvey.reduce((sum, row) => sum + (row.newCount || 0), 0)
+  return { ...payload, totalNew, bySurvey, feed }
+}
+
+function isCoveredByRead(item, reads) {
+  const readAt = reads?.[item?.surveyId]
+  if (!readAt) return false
+  const readMs = toTimestampMs(readAt)
+  if (!Number.isFinite(readMs)) return false
+  const latestMs = toTimestampMs(item?.latestAt)
+  if (!Number.isFinite(latestMs)) return true
+  return latestMs <= readMs
+}
+
 export function buildNotificationsPayload(surveys, { newBySurvey = {} } = {}) {
   const feed = buildNotificationFeed(surveys, { newBySurvey })
   const bySurvey = feed.map(({ surveyId, title, newCount, latestAt }) => ({

@@ -44,6 +44,10 @@ export function evalTextOperator(answer, operator, textValue) {
 }
 
 function isAnswerEmpty(answer, questionType) {
+  if (questionType === 'phone') {
+    const number = answer && typeof answer === 'object' ? answer.number : answer
+    return !String(number ?? '').trim()
+  }
   if (answer === undefined || answer === null || answer === '') return true
   if (Array.isArray(answer) && answer.length === 0) return true
   if (isMatrixType(questionType) && isMatrixAnswerEmpty(answer)) return true
@@ -93,7 +97,10 @@ function evalCondition(cond, responses, allItems) {
     return evalChoiceCondition(cond, q, answer)
   }
 
-  return evalTextOperator(answer, cond.textOperator || 'contains', cond.textValue)
+  const text = q.questionType === 'phone' && answer && typeof answer === 'object'
+    ? answer.number
+    : answer
+  return evalTextOperator(text, cond.textOperator || 'contains', cond.textValue)
 }
 
 /**

@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApi } from '@/config/api'
 import { fetchResponseNotifications } from '@/api/platform/notifications'
+import {
+  loadNotificationReads,
+  saveNotificationReads,
+} from '@/utils/notifications/notificationReads'
 import {
   buildLocalNotifications,
   buildNotificationsPayload,
   EMPTY_NOTIFICATIONS,
+  hideReadNotifications,
   surveyIdOf,
 } from '@/utils/notifications/responseNotifications'
 
@@ -31,8 +36,10 @@ function payloadFromSurveys(surveys) {
  */
 export function useResponseNotifications(surveys) {
   const [payload, setPayload] = useState(() => payloadFromSurveys(surveys))
+  const [reads, setReads] = useState(() => loadNotificationReads())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const unread = useMemo(() => hideReadNotifications(payload, reads), [payload, reads])
 
   const applyLocal = useCallback(() => {
     setPayload(payloadFromSurveys(surveys))
@@ -74,5 +81,18 @@ export function useResponseNotifications(surveys) {
     }
   }, [refreshFromApi])
 
-  return { payload, loading, error, refresh: useApi ? refreshFromApi : applyLocal }
+  const markRead = useCallback((surveyIds) => {
+    const ids = [...new Set((surveyIds || []).filter(Boolean))]
+    if (!ids.length) return
+    setReads(saveNotificationReads(ids))
+  }, [])
+
+  return {
+    payload,
+    unread,
+    loading,
+    error,
+    refresh: useApi ? refreshFromApi : applyLocal,
+    markRead,
+  }
 }
