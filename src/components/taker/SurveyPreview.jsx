@@ -318,7 +318,10 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
     return false
   }
 
+  const backDisabled = survey?.settings?.disableBackButton === true
+
   const handleBack = () => {
+    if (backDisabled) return
     setCurrentPage(p => Math.max(0, p - 1))
     bumpLockVisit()
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -553,15 +556,17 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
                   </p>
                 )}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    disabled={currentPage === 0}
-                    className="order-2 sm:order-1 inline-flex items-center justify-center sm:justify-start gap-2 min-h-11 px-4 text-sm font-medium text-ink-600 hover:text-ink-900 hover:bg-ink-50 rounded-xl border border-transparent hover:border-ink-200 disabled:opacity-35 disabled:pointer-events-none transition-colors"
-                  >
-                    <ChevronLeft size={18} aria-hidden />
-                    Back
-                  </button>
+                  {!backDisabled && (
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      disabled={currentPage === 0}
+                      className="order-2 sm:order-1 inline-flex items-center justify-center sm:justify-start gap-2 min-h-11 px-4 text-sm font-medium text-ink-600 hover:text-ink-900 hover:bg-ink-50 rounded-xl border border-transparent hover:border-ink-200 disabled:opacity-35 disabled:pointer-events-none transition-colors"
+                    >
+                      <ChevronLeft size={18} aria-hidden />
+                      Back
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleNext}
