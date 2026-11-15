@@ -37,6 +37,23 @@ export function getSortedPhoneCountries() {
   return sortedCountriesCache
 }
 
+/** Countries whose English name starts with this letter (a–z). */
+export function countriesByNameLetter(countries, letter) {
+  if (!letter || letter.length !== 1) return []
+  const prefix = letter.toLowerCase()
+  return countries.filter(c => c.name.toLowerCase().startsWith(prefix))
+}
+
+/** Next match when typing the same letter again (F → France, Finland, …). */
+export function nextCountryByLetter(countries, letter, currentIso = null) {
+  const matches = countriesByNameLetter(countries, letter)
+  if (!matches.length) return null
+  if (!currentIso) return matches[0]
+  const idx = matches.findIndex(c => c.iso === currentIso)
+  if (idx < 0) return matches[0]
+  return matches[(idx + 1) % matches.length]
+}
+
 /** Country plus the number exactly as typed. No length or format check. */
 export function formatPhoneAnswer(answer) {
   if (answer == null || answer === '') return ''
