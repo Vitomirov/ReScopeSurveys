@@ -30,6 +30,7 @@ export function formatAnswer(question, responses, companions) {
 
     case 'open_text': return answer ?? ''
     case 'date':      return answer ?? ''
+    case 'phone':     return answer ?? ''
     case 'slider':    return answer != null ? String(answer) : ''
 
     case 'constant_sum': {

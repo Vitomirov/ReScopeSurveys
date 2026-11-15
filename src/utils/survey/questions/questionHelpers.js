@@ -1,6 +1,6 @@
 import {
   CircleDot, CheckSquare, ChevronDownSquare, AlignLeft,
-  Calendar, Grid, ArrowLeftRight, BarChart2, Layers, Hash, SlidersHorizontal,
+  Calendar, Phone, Grid, ArrowLeftRight, BarChart2, Layers, Hash, SlidersHorizontal,
   RadioTower, Star, ListOrdered, AlignJustify,
   ArrowLeftRight as ArrowLR, Layers as LayersIcon, Image as ImageIcon,
 } from 'lucide-react'
@@ -46,6 +46,14 @@ export const QUESTION_TYPES = [
     shortLabel: 'Date',
     description: 'Date picker with format options',
     icon: '📅',
+    group: 'Input',
+  },
+  {
+    type: 'phone',
+    label: 'Phone',
+    shortLabel: 'Phone',
+    description: 'Country and phone number',
+    icon: '☎',
     group: 'Input',
   },
   {
@@ -174,6 +182,7 @@ export const TYPE_ICONS = {
   dropdown:            ChevronDownSquare,
   open_text:           AlignLeft,
   date:                Calendar,
+  phone:               Phone,
   matrix:              Grid,
   bipolar_matrix:      ArrowLeftRight,
   maxdiff:             BarChart2,
@@ -196,6 +205,7 @@ export const TYPE_COLORS = {
   dropdown:       { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-200' },
   open_text:      { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
   date:           { bg: 'bg-sky-50',     text: 'text-sky-600',     border: 'border-sky-200' },
+  phone:          { bg: 'bg-slate-50',   text: 'text-slate-600',   border: 'border-slate-200' },
   matrix:         { bg: 'bg-indigo-50',  text: 'text-indigo-600',  border: 'border-indigo-200' },
   bipolar_matrix: { bg: 'bg-fuchsia-50', text: 'text-fuchsia-600', border: 'border-fuchsia-200' },
   maxdiff:        { bg: 'bg-orange-50',  text: 'text-orange-600',  border: 'border-orange-200' },

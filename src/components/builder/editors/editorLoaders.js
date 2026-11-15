@@ -2,6 +2,7 @@
 export const EDITOR_LOADERS = {
   open_text:           () => import('./basic/OpenTextEditor.jsx'),
   date:                () => import('./basic/DateEditor.jsx'),
+  phone:               () => import('./basic/PhoneEditor.jsx'),
   matrix:              () => import('./matrix/MatrixEditor.jsx'),
   bipolar_matrix:      () => import('./matrix/BipolarMatrixEditor.jsx'),
   maxdiff:             () => import('./structured/MaxDiffEditor.jsx'),

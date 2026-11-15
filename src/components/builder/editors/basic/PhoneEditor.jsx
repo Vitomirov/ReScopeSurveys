@@ -1,0 +1,17 @@
+import { QuestionLogicPanel } from '../logic/QuestionLogicPanel'
+
+export function PhoneEditor({ question, dispatch, allItems = [], itemIndex = 0 }) {
+  return (
+    <QuestionLogicPanel
+      question={question}
+      dispatch={dispatch}
+      allItems={allItems}
+      itemIndex={itemIndex}
+      terminationHint="Terminate based on the phone number. Rules use the stored value, for example +447700900123."
+      branchHint="Jump respondents when their phone answer matches a rule."
+      redirectHint="Send respondents externally when their phone answer matches a rule."
+    />
+  )
+}
+
+export default PhoneEditor

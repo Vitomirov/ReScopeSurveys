@@ -32,6 +32,7 @@ export function sampleValue(q) {
     }
     case 'open_text':      return 'Sample text response'
     case 'date':           return '2025-06-25'
+    case 'phone':          return '+447700900123'
     case 'slider': {
       const cfg = q.sliderConfig
       return String(cfg?.defaultValue ?? cfg?.min ?? 1)

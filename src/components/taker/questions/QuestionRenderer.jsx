@@ -24,7 +24,9 @@ function buildQuestionProps(questionType, question, opts, value, onChange, surve
  * Renders the respondent-facing input for a survey question.
  * Central registry — add new question types in questionLoaders.js only.
  */
-export function QuestionRenderer({ question, value, onChange, surveyDateFormat, companions, onCompanionChange, responses, items }) {
+export function QuestionRenderer({
+  question, value, onChange, surveyDateFormat, companions, onCompanionChange, responses = {}, items = [],
+}) {
   const { questionType } = question
   const pipeCfg = question.pipedOptionsConfig
   const opts = useMemo(

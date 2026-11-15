@@ -5,6 +5,7 @@ export const QUESTION_LOADERS = {
   dropdown:            () => import('./choice/DropdownQ.jsx'),
   open_text:           () => import('./basic/OpenTextQ.jsx'),
   date:                () => import('./basic/DateQ.jsx'),
+  phone:               () => import('./basic/PhoneQ.jsx'),
   matrix:              () => import('./matrix/MatrixQ.jsx'),
   bipolar_matrix:      () => import('./matrix/BipolarMatrixQ.jsx'),
   maxdiff:             () => import('./structured/MaxDiffQ.jsx'),

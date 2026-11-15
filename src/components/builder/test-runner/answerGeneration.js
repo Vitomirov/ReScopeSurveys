@@ -97,6 +97,7 @@ function safeAnswer(q, items) {
     }
     case 'open_text':    return 'Test response'
     case 'date':         return new Date().toISOString().split('T')[0]
+    case 'phone':        return '+447700900123'
     case 'slider': {
       const cfg = q.sliderConfig
       return cfg.defaultValue ?? cfg.min
