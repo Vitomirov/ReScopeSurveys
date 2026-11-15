@@ -90,7 +90,7 @@ export const makeQuestion = (questionType = 'single_select') => {
     externalRedirectNoneUrl: '',
 
     openTextConfig: {
-      multiline: true,
+      multiline: false,
       placeholder: OPEN_TEXT_PLACEHOLDER,
       minLength: null,
       maxLength: null,
