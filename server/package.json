@@ -11,8 +11,8 @@
     "dev:all": "npm run dev:all --prefix ..",
     "start": "node src/index.js",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate": "node --env-file=../.env ./node_modules/prisma/build/index.js migrate deploy",
+    "db:migrate:dev": "node --env-file=../.env ./node_modules/prisma/build/index.js migrate dev",
     "migrate:platform-lists": "node scripts/migrate-platform-lists.mjs",
     "postinstall": "prisma generate"
   },

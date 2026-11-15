@@ -102,7 +102,7 @@ export const makeQuestion = (questionType = 'single_select') => {
     },
 
     dateConfig: {
-      format: 'MM/DD/YYYY',
+      format: 'inherit',
       minDate: '',
       maxDate: '',
     },

@@ -1,16 +1,11 @@
 import { Divider, SectionLabel } from '@/components/ui'
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { DateQ } from '@/components/taker/questions/basic/DateQ'
+import { resolveDateFormat, SURVEY_DATE_FORMAT_OPTIONS } from '@/utils/format/dateSurveyFormat'
 import { QuestionLogicPanel } from '../logic/QuestionLogicPanel'
-
-const DATE_FORMATS = [
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY', example: '06/25/2025', region: 'US' },
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY', example: '25/06/2025', region: 'EU / UK' },
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD', example: '2025-06-25', region: 'ISO 8601' },
-]
 
 export function DateEditor({ question, dispatch, surveyDateFormat, allItems = [], itemIndex = 0 }) {
   const cfg = question.dateConfig
-  const effectiveFormat = cfg.format === 'inherit' ? (surveyDateFormat || DEFAULT_DATE_FORMAT) : cfg.format
+  const inheritedDefault = resolveDateFormat('inherit', surveyDateFormat)
 
   const update = (patch) =>
     dispatch({ type: 'UPDATE_ITEM', id: question.id, patch: { dateConfig: { ...cfg, ...patch } } })
@@ -23,7 +18,7 @@ export function DateEditor({ question, dispatch, surveyDateFormat, allItems = []
 
         {/* Inherit toggle */}
         <button
-          onClick={() => update({ format: cfg.format === 'inherit' ? surveyDateFormat || DEFAULT_DATE_FORMAT : 'inherit' })}
+          onClick={() => update({ format: cfg.format === 'inherit' ? inheritedDefault : 'inherit' })}
           className={`w-full flex items-center justify-between p-2.5 rounded-lg border mb-2 transition-all ${
             cfg.format === 'inherit'
               ? 'border-brand-400 bg-brand-50'
@@ -32,7 +27,7 @@ export function DateEditor({ question, dispatch, surveyDateFormat, allItems = []
         >
           <div className="text-left">
             <p className="text-sm font-medium text-ink-700">Inherit survey default</p>
-            <p className="text-xs text-ink-400">Currently: <span className="font-mono font-medium">{surveyDateFormat || DEFAULT_DATE_FORMAT}</span></p>
+            <p className="text-xs text-ink-400">Currently: <span className="font-mono font-medium">{inheritedDefault}</span></p>
           </div>
           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${cfg.format === 'inherit' ? 'border-brand-500 bg-brand-500' : 'border-ink-300'}`}>
             {cfg.format === 'inherit' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -42,7 +37,7 @@ export function DateEditor({ question, dispatch, surveyDateFormat, allItems = []
         {/* Custom format */}
         <p className="text-xs text-ink-400 mb-2">— or choose a custom format for this question —</p>
         <div className="space-y-1.5">
-          {DATE_FORMATS.map(fmt => (
+          {SURVEY_DATE_FORMAT_OPTIONS.map(fmt => (
             <button
               key={fmt.value}
               onClick={() => update({ format: fmt.value })}
@@ -99,17 +94,12 @@ export function DateEditor({ question, dispatch, surveyDateFormat, allItems = []
       <Divider label="Preview" />
       <div className="rounded-lg border border-dashed border-ink-200 p-3 bg-ink-50 space-y-2">
         <p className="text-xs text-ink-400">Respondent will see:</p>
-        <input
-          type="date"
-          min={cfg.minDate || undefined}
-          max={cfg.maxDate || undefined}
-          className="input-base"
-          readOnly
+        <DateQ
+          question={question}
+          value=""
+          onChange={() => {}}
+          surveyDateFormat={surveyDateFormat}
         />
-        <p className="text-xs text-ink-400 font-mono">
-          Format: {effectiveFormat}
-          {cfg.format === 'inherit' && ' (inherited)'}
-        </p>
         {(cfg.minDate || cfg.maxDate) && (
           <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
             {cfg.minDate && `From: ${cfg.minDate}`}{cfg.minDate && cfg.maxDate && ' · '}{cfg.maxDate && `To: ${cfg.maxDate}`}

@@ -11,6 +11,7 @@ import { canManagePlatform } from '@/utils/platform/permissions'
 import { isSurveyCodeTaken } from '@/utils/data/surveyLibrary'
 import { ShareableSurveyUrl } from './managers/ShareableSurveyUrl'
 import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { SURVEY_DATE_FORMAT_OPTIONS } from '@/utils/format/dateSurveyFormat'
 
 const PlatformSettings = lazy(() => import('@/components/dashboard/PlatformSettings.jsx'))
 
@@ -135,9 +136,9 @@ export function SurveyMetadata({ survey, dispatch }) {
             onChange={e => set('defaultDateFormat', e.target.value)}
             className="input-base text-sm w-full font-mono"
           >
-            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-            <option value={DEFAULT_DATE_FORMAT}>{DEFAULT_DATE_FORMAT}</option>
-            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            {SURVEY_DATE_FORMAT_OPTIONS.map(fmt => (
+              <option key={fmt.value} value={fmt.value}>{fmt.label}</option>
+            ))}
           </select>
         </div>
 
