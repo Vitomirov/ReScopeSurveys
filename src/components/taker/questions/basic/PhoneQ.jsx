@@ -122,12 +122,12 @@ export function PhoneQ({ value, onChange }) {
       />
       <input
         type="tel"
-        inputMode="tel"
+        inputMode="numeric"
         autoComplete="tel"
         value={number}
         placeholder="Phone number"
         aria-label="Phone number"
-        onChange={e => commit(country, e.target.value)}
+        onChange={e => commit(country, e.target.value.replace(/\D/g, ''))}
         className={`${TAKER_INPUT_CLASS} flex-1`}
       />
     </div>
