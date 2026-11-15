@@ -16,6 +16,7 @@ import {
 } from '@/api/survey/responses'
 import { fetchLastExport, recordExportApi } from '@/api/survey/exports'
 import { generateCSV, generateCSVFromApiPages, downloadCSV } from '@/utils/csvExport'
+import { formatAnswer } from '@/utils/csv/formatAnswer'
 
 const STATUS_META = {
   complete:   { label: 'Complete',    color: 'text-emerald-700 bg-emerald-100 border-emerald-200' },
@@ -296,8 +297,12 @@ function FilterChip({ label, onRemove }) {
 }
 
 // ─── Response table ─────────────────────────────────────────────────────────
-function ResponseTable({ responses, surveyId, onDeleted, onDeleteResponse }) {
+function ResponseTable({ responses, items, surveyId, onDeleted, onDeleteResponse }) {
   const [expanded, setExpanded] = useState(null)
+  const questions = useMemo(
+    () => (items || []).filter(item => item.itemType === 'question'),
+    [items]
+  )
 
   const del = async (id) => {
     if (!window.confirm('Delete this response? This cannot be undone.')) return
@@ -343,16 +348,22 @@ function ResponseTable({ responses, surveyId, onDeleted, onDeleteResponse }) {
 
           {/* Expanded detail */}
           {expanded === r.id && (
-            <div className="border-t border-ink-100 px-3 py-2.5 bg-ink-50">
-              <p className="text-xs font-semibold text-ink-500 mb-2">Response data (raw)</p>
-              <pre className="text-xs text-ink-600 font-mono bg-white rounded-lg p-2 overflow-x-auto max-h-48 overflow-y-auto border border-ink-100">
-                {JSON.stringify({ responses: r.responses, companions: r.companions, fingerprint: r.fingerprint || undefined }, null, 2)}
-              </pre>
-              {r.terminatedBy && (
-                <p className="text-xs text-rose-600 mt-2">
-                  Terminated at: {r.terminatedBy.cause || r.terminatedBy.blockTitle || '—'}
-                </p>
-              )}
+            <div className="border-t border-ink-100 px-3 py-2.5 bg-ink-50 space-y-2 max-h-64 overflow-y-auto">
+              {questions.length === 0 ? (
+                <p className="text-xs text-ink-400">No questions in this survey.</p>
+              ) : questions.map((q, index) => {
+                const answer = formatAnswer(q, r.responses || {}, r.companions)
+                return (
+                  <div key={q.id} className="bg-white rounded-lg border border-ink-100 px-2.5 py-2">
+                    <p className="text-xs font-medium text-ink-700">
+                      {index + 1}. {q.text || 'Untitled question'}
+                    </p>
+                    <p className="text-xs text-ink-600 mt-0.5 whitespace-pre-wrap break-words">
+                      {answer || '—'}
+                    </p>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -595,6 +606,7 @@ export function ExportManager({ survey, items, onClose }) {
             ) : (
               <ResponseTable
                 responses={filtered}
+                items={items}
                 surveyId={surveyId}
                 onDeleted={refresh}
                 onDeleteResponse={handleDeleteResponse}
