@@ -3,7 +3,7 @@
 // terminates, and termination blocks. Condition matching delegates to
 // conditionEngine so visibility and termination share identical evaluators.
 
-import { isChoiceType } from '../questions/questionHelpers.js'
+import { isChoiceType } from '../questions/questionTypeFlags.js'
 import { evalConditionSet, evalTextOperator } from './conditionEngine.js'
 import {
   dateOperatorNeedsEndValue,

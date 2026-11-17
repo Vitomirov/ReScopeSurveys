@@ -2,7 +2,7 @@
 // Uses conditionEngine for all condition matching — same logic as termination
 // blocks, so survey creators only need one mental model for AND/OR rules.
 
-import { buildQuestionNumberById } from '../questions/questionHelpers.js'
+import { buildQuestionNumberById } from '../questions/questionNumbering.js'
 import { isItemVisible } from './itemVisibility.js'
 import {
   formatConditionPhraseBlockStyle,

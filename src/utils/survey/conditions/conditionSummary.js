@@ -2,7 +2,7 @@
 // Shared plain-text formatters for visibility summaries, termination block
 // causes, and builder condition previews. Evaluation logic lives in conditionEngine.
 
-import { isChoiceType, isMatrixType } from '../questions/questionHelpers.js'
+import { isChoiceType, isMatrixType } from '../questions/questionTypeFlags.js'
 import { resolveOptionLabel } from '../questions/questionOptions.js'
 import { getChoiceConditionLabel, isDateQuestion, isSliderQuestion, TEXT_CONDITION_TYPES } from './conditionConstants.js'
 import { formatDateConditionPhrase } from './dateOperators.js'

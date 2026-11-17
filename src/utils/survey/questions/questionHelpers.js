@@ -225,15 +225,4 @@ export const TYPE_COLORS = {
 // Group question types by category for the Add Question panel
 export const QUESTION_TYPE_GROUPS = ['Choice', 'Text', 'Input', 'Grid', 'Scale', 'Advanced']
 
-/** Map question id → 1-based display number (single O(n) pass). */
-export function buildQuestionNumberById(items) {
-  const map = {}
-  let n = 0
-  for (const item of items) {
-    if (item.itemType === 'question') {
-      n++
-      map[item.id] = n
-    }
-  }
-  return map
-}
+export { buildQuestionNumberById } from './questionNumbering.js'
