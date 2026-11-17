@@ -1,4 +1,5 @@
 import { apiFetch } from '../client'
+import { rememberClientWriteKey, readClientWriteKey } from '@/utils/data/pendingResponse'
 
 export async function saveResponseApi(surveyId, entry) {
   return apiFetch(`/api/surveys/${encodeURIComponent(surveyId)}/responses`, {
@@ -8,10 +9,20 @@ export async function saveResponseApi(surveyId, entry) {
 }
 
 export async function savePublicResponse(surveyId, entry) {
-  return apiFetch(`/api/public/surveys/${encodeURIComponent(surveyId)}/responses`, {
+  const headers = {}
+  const storedKey = entry?.id ? readClientWriteKey(entry.id) : null
+  if (storedKey) headers['X-Response-Write-Key'] = storedKey
+
+  const data = await apiFetch(`/api/public/surveys/${encodeURIComponent(surveyId)}/responses`, {
     method: 'POST',
+    headers,
     body: JSON.stringify(entry),
   })
+
+  if (data?.writeKey && entry?.id) {
+    rememberClientWriteKey(entry.id, data.writeKey)
+  }
+  return data
 }
 
 async function getResponses(surveyId, { page = 1, limit = 50 } = {}) {

@@ -19,9 +19,12 @@ import {
 import {
   newWriteKey,
   presentedKeyFor,
+  presentedKeyFromRequest,
   rememberWriteKey,
   writeKeyMatches,
   hashWriteKey,
+  RESPONSE_WRITE_COOKIE,
+  RESPONSE_WRITE_HEADER,
 } from '../../../server/src/lib/survey/responseWriteKey.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -41,6 +44,29 @@ test('new public write keys match only the browser that received them', () => {
   const second = '22222222-2222-4222-8222-222222222222'
   const next = rememberWriteKey(cookie, second, newWriteKey())
   assert.equal(presentedKeyFor(next, id), key)
+})
+
+test('presented key prefers the header over a missing cookie', () => {
+  const id = '11111111-1111-4111-8111-111111111111'
+  const key = newWriteKey()
+  const fromHeader = presentedKeyFromRequest({
+    headers: { [RESPONSE_WRITE_HEADER]: key },
+    cookies: {},
+  }, id)
+  assert.equal(fromHeader, key)
+
+  const cookie = rememberWriteKey('', id, key)
+  const fromCookie = presentedKeyFromRequest({
+    headers: {},
+    cookies: { [RESPONSE_WRITE_COOKIE]: cookie },
+  }, id)
+  assert.equal(fromCookie, key)
+
+  const headerWins = presentedKeyFromRequest({
+    headers: { [RESPONSE_WRITE_HEADER]: 'header-key' },
+    cookies: { [RESPONSE_WRITE_COOKIE]: cookie },
+  }, id)
+  assert.equal(headerWins, 'header-key')
 })
 
 test('password login does not read the authenticator key', () => {

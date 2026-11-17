@@ -15,7 +15,7 @@ import { isEmailOnDncList, normalizeEmail } from '../lib/survey/dncCheck.js'
 import { assertOrgActive } from '../lib/billing/planEnforcement.js'
 import {
   RESPONSE_WRITE_COOKIE,
-  presentedKeyFor,
+  presentedKeyFromRequest,
   rememberWriteKey,
 } from '../lib/survey/responseWriteKey.js'
 
@@ -273,22 +273,32 @@ export async function registerPublicRoutes(app) {
     }
 
     const bodyId = typeof entry.id === 'string' ? entry.id.trim() : ''
+    const presentedKey = presentedKeyFromRequest(request, bodyId)
     const outcome = await app.responseInbox.savePublic({
       surveyId: row.id,
       organizationId: row.organizationId,
       entry,
       surveyItems: row.items || [],
-      presentedKey: presentedKeyFor(request.cookies?.[RESPONSE_WRITE_COOKIE], bodyId),
+      presentedKey,
     })
 
     if (outcome.queued) {
       setWriteCookie(app, request, reply, outcome.id, outcome.issuedWriteKey)
-      return reply.code(202).send({ ok: true, accepted: true, id: outcome.id })
+      return reply.code(202).send({
+        ok: true,
+        accepted: true,
+        id: outcome.id,
+        ...(outcome.issuedWriteKey ? { writeKey: outcome.issuedWriteKey } : {}),
+      })
     }
 
     const result = outcome.result
     if (sendUpsertResult(reply, result)) return
     setWriteCookie(app, request, reply, result.row.id, result.issuedWriteKey)
-    return { ok: true, id: result.row.id }
+    return {
+      ok: true,
+      id: result.row.id,
+      ...(result.issuedWriteKey ? { writeKey: result.issuedWriteKey } : {}),
+    }
   })
 }

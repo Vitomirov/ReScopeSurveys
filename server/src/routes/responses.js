@@ -79,7 +79,7 @@ export async function upsertResponse(app, {
   entry,
   surveyItems = [],
   publicWriter = null,
-}) {
+}, replay = false) {
   const normalized = normalizeResponseEntry(entry, surveyItems)
   if (!normalized || typeof normalized !== 'object') return null
 
@@ -117,7 +117,20 @@ export async function upsertResponse(app, {
   }
 
   const writeKey = resolveWriteKey(existing, publicWriter)
-  if (writeKey.writeKeyRejected) return { writeKeyRejected: true }
+  if (writeKey.writeKeyRejected) {
+    // Same-id retry without the cookie (common on mobile): if the row is already
+    // at this status, or both sides are terminal, treat as success — not 401.
+    if (
+      existing
+      && (
+        existing.status === data.status
+        || (TERMINAL_STATUSES.has(existing.status) && TERMINAL_STATUSES.has(data.status))
+      )
+    ) {
+      return { row: existing }
+    }
+    return { writeKeyRejected: true }
+  }
   const issuedWriteKey = writeKey.issuedWriteKey
   if (writeKey.writeKeyHash) data.writeKeyHash = writeKey.writeKeyHash
 
@@ -135,16 +148,30 @@ export async function upsertResponse(app, {
     status: data.status,
   })
 
-  const row = await app.prisma.response.upsert({
-    where: { id: data.id },
-    create: data,
-    update: {
-      status:    data.status,
-      timestamp: data.timestamp,
-      payload:   data.payload,
-    },
-  })
-  return { row, issuedWriteKey }
+  try {
+    const row = await app.prisma.response.upsert({
+      where: { id: data.id },
+      create: data,
+      update: {
+        status:    data.status,
+        timestamp: data.timestamp,
+        payload:   data.payload,
+      },
+    })
+    return { row, issuedWriteKey }
+  } catch (err) {
+    // Two submits of the same id can both pass the empty read, then one hits
+    // the primary key. Replay once: the row is there, and a finished row is
+    // returned as success instead of a 409 the taker treats as a dead end.
+    if (replay || err?.code !== 'P2002') throw err
+    return upsertResponse(app, {
+      surveyId,
+      organizationId,
+      entry: normalized,
+      surveyItems,
+      publicWriter,
+    }, true)
+  }
 }
 
 /** Map upsertResponse() outcomes to an HTTP reply. Returns true when sent. */

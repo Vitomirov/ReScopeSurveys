@@ -6,6 +6,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
 export const RESPONSE_WRITE_COOKIE = 'rs_response_write'
+/** Mobile browsers often drop the write cookie; the taker also sends this header. */
+export const RESPONSE_WRITE_HEADER = 'x-response-write-key'
 const MAX_PAIRS = 8
 
 export function hashWriteKey(raw) {
@@ -65,6 +67,14 @@ export function presentedKeyFor(cookieValue, responseId) {
   if (!responseId) return null
   const found = parsePairs(cookieValue).find((pair) => pair.id === responseId)
   return found ? found.key : null
+}
+
+/** Prefer the explicit header (sessionStorage backup); fall back to the cookie. */
+export function presentedKeyFromRequest(request, responseId) {
+  const raw = request?.headers?.[RESPONSE_WRITE_HEADER]
+  const fromHeader = typeof raw === 'string' ? raw.trim() : Array.isArray(raw) ? String(raw[0] || '').trim() : ''
+  if (fromHeader) return fromHeader
+  return presentedKeyFor(request?.cookies?.[RESPONSE_WRITE_COOKIE], responseId)
 }
 
 export function rememberWriteKey(cookieValue, responseId, rawKey) {

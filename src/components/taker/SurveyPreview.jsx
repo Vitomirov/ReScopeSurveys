@@ -5,8 +5,9 @@ import { resolvePipingTokens } from '@/utils/survey/questions/piping'
 import { generateCSV, downloadCSV } from '@/utils/csvExport'
 import { saveResponse, newResponseId } from '@/utils/data/responseStore'
 import {
+  clearClientWriteKey,
   clearPendingResponse,
-  isRetryableStatus,
+  isRetryableSaveError,
   readPendingResponse,
   retryDelayMs,
   wait,
@@ -52,6 +53,8 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
   const responseIdRef = useRef(null)
   const saveGen = useRef(0)
   const saveLock = useRef(false)
+  const lastStartRef = useRef(null)
+  const lastCommitRef = useRef(null)
 
   // ── Collect device/browser fingerprint once, on mount ──────────────────
   // Runs in the background regardless of cover page state, so by the time
@@ -154,6 +157,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
     saveGen.current += 1
     saveLock.current = false
     if (survey?.id) clearPendingResponse(survey.id)
+    if (responseIdRef.current) clearClientWriteKey(responseIdRef.current)
     setResponses({}); setCompanions({}); setErrors({}); setCurrentPage(0)
     setSubmitted(false); setTerminated(false); setTerminatedBy(null); setRedirectedTo(null)
     setHolding(null)
@@ -204,6 +208,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
 
   // A 2xx response is a confirmed handoff: 200 is stored, 202 is accepted into the inbox.
   const commitRecord = async (record) => {
+    lastCommitRef.current = record
     const gen = ++saveGen.current
     setHolding('saving')
     if (useApi && survey?.id) writePendingResponse(survey.id, record)
@@ -226,7 +231,8 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       } catch (err) {
         if (saveGen.current !== gen) return
         console.error('Failed to save response', err)
-        if (!isRetryableStatus(err?.status)) {
+        if (!isRetryableSaveError(err, attempt)) {
+          saveLock.current = false
           setHolding('rejected')
           return
         }
@@ -239,6 +245,7 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
 
   const startSave = (outcome, terminatedByArg = null, redirectUrl = null, responseSnapshot = null) => {
     if (saveLock.current) return
+    lastStartRef.current = { outcome, terminatedByArg, redirectUrl, responseSnapshot }
     saveLock.current = true
     setHolding('saving')
     void (async () => {
@@ -252,7 +259,8 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
               finalStatus = 'dnc'
             }
           } catch (err) {
-            if (!isRetryableStatus(err?.status)) throw err
+            // The server applies the same list when the response is stored.
+            console.error('DNC check failed; saving response anyway', err)
           }
         }
       }
@@ -270,6 +278,19 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
       saveLock.current = false
       setHolding('rejected')
     })
+  }
+
+  const retryRejectedSave = () => {
+    if (saveLock.current) return
+    const started = lastStartRef.current
+    if (started) {
+      startSave(started.outcome, started.terminatedByArg, started.redirectUrl, started.responseSnapshot)
+      return
+    }
+    const record = lastCommitRef.current
+    if (!record) return
+    saveLock.current = true
+    void commitRecord(record)
   }
 
   const downloadCurrent = (status, terminatedByArg, nameSuffix) => {
@@ -448,9 +469,20 @@ export function SurveyPreview({ survey, items, onClose, isPublic = false, isEmbe
         <ClosedSurveyScreen settings={survey?.settings} />
       ) : holding ? (
         <div className="flex-1 flex items-center justify-center p-6">
-          <p className="text-sm text-ink-500 text-center max-w-md">
-            {holding === 'rejected' ? SAVE_REJECTED : holding === 'busy' ? SURVEY_BUSY_SAVE : SAVING_RESPONSE}
-          </p>
+          <div className="text-center max-w-md">
+            <p className="text-sm text-ink-500">
+              {holding === 'rejected' ? SAVE_REJECTED : holding === 'busy' ? SURVEY_BUSY_SAVE : SAVING_RESPONSE}
+            </p>
+            {holding === 'rejected' && (
+              <button
+                type="button"
+                onClick={retryRejectedSave}
+                className="btn-primary mt-4 min-h-11 px-6 text-sm font-semibold"
+              >
+                Try again
+              </button>
+            )}
+          </div>
         </div>
       ) : showCover ? (
         <CoverPage survey={survey} onStart={() => { setShowCover(false); bumpLockVisit() }} isPublic={isPublic} />

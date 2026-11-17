@@ -195,6 +195,45 @@ test('validateCompleteAnswers still rejects when every question is hidden and un
   assert.equal(result.code, 'INCOMPLETE_ANSWERS')
 })
 
+test('validateCompleteAnswers does not require questions a forward branch skipped', () => {
+  const branchRule = {
+    id: 'r1',
+    ruleType: 'choice',
+    optionIds: ['opt-yes'],
+    matchMode: 'any',
+    targetPageBreakId: 'break-end',
+  }
+  const q = (id, extra = {}) => ({
+    itemType: 'question',
+    id,
+    questionType: 'single_select',
+    required: true,
+    options: [{ id: 'opt-yes', text: 'Yes' }, { id: 'opt-no', text: 'No' }],
+    ...extra,
+  })
+  const items = [
+    q('q1'),
+    { itemType: 'page_break', id: 'break-1' },
+    q('q2', { branchRules: [branchRule], branchLogic: 'if_any' }),
+    { itemType: 'page_break', id: 'break-2' },
+    q('q3'),
+    { itemType: 'page_break', id: 'break-3' },
+    q('q4'),
+    { itemType: 'page_break', id: 'break-end' },
+    q('q5'),
+  ]
+  const skipped = validateCompleteAnswers({
+    responses: { q1: 'opt-no', q2: 'opt-yes', q5: 'opt-no' },
+  }, items)
+  assert.deepEqual(skipped, { ok: true })
+
+  const linear = validateCompleteAnswers({
+    responses: { q1: 'opt-no', q2: 'opt-no', q5: 'opt-no' },
+  }, items)
+  assert.equal(linear.ok, false)
+  assert.equal(linear.code, 'INCOMPLETE_ANSWERS')
+})
+
 test('validateCompleteAnswers does not require an email question hidden by visibility', () => {
   const items = [
     branchQuestion(),

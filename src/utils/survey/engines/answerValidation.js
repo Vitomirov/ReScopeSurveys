@@ -8,6 +8,13 @@ function phoneNumberText(answer) {
 }
 
 export function validateAnswer(question, answer) {
+  if (question.isEmailField) {
+    const text = typeof answer === 'string' ? answer.trim() : ''
+    if (!text.includes('@')) {
+      return 'Please enter a valid email address (e.g. name@example.com).'
+    }
+  }
+
   if (question.questionType === 'phone') {
     if (question.required && !String(phoneNumberText(answer) ?? '').trim()) {
       return 'This question is required.'
