@@ -42,6 +42,10 @@ Desktop.ini
 # Testing / coverage
 coverage/
 k6/results/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
 
 # Cache
 .cache/

@@ -42,8 +42,8 @@ export function makeApi(base, { injectTokenFromCookie = true } = {}) {
     try { return new URL(base).origin } catch { return 'http://127.0.0.1:3003' }
   })()
 
-  return async function api(path, { method = 'GET', body, token, cookies, origin } = {}) {
-    const headers = {}
+  return async function api(path, { method = 'GET', body, token, cookies, origin, headers: extraHeaders } = {}) {
+    const headers = { ...(extraHeaders || {}) }
     if (body) headers['Content-Type'] = 'application/json'
     if (token) headers.Authorization = `Bearer ${token}`
 
