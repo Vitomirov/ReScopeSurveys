@@ -60,6 +60,8 @@ test('plan feature matrix gates by tier', () => {
   assert.equal(canEmbedOnOwnSites('professional'), true)
   assert.equal(canUseCustomDomain('professional'), false)
   assert.equal(canUseCustomDomain('enterprise'), true)
+  assert.equal(planFeatureSummary('enterprise').surveyImport, true)
+  assert.equal(planFeatureSummary('starter').surveyImport, false)
   assert.equal(embedOriginLimit('professional'), 10)
   assert.equal(embedOriginLimit('enterprise'), null)
   assert.equal(maxSurveys('free_trial'), 5)

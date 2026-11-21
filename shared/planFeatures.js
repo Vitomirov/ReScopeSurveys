@@ -54,6 +54,11 @@ export function canEnforceBrandLock(planId) {
   return isEnterprisePlan(planId)
 }
 
+/** Survey import (file, text outline, webhook) — enterprise only. */
+export function canUseSurveyImport(planId) {
+  return isEnterprisePlan(planId)
+}
+
 /** Max embed origins per plan (enterprise = unlimited represented as null). */
 export function embedOriginLimit(planId) {
   if (isEnterprisePlan(planId)) return null
@@ -78,6 +83,7 @@ export function planFeatureSummary(planId) {
     embed: canEmbedOnOwnSites(resolved),
     customDomain: canUseCustomDomain(resolved),
     brandLock: canEnforceBrandLock(resolved),
+    surveyImport: canUseSurveyImport(resolved),
     embedOriginLimit: embedOriginLimit(resolved),
     maxSurveys: maxSurveys(resolved),
     isFreeTrial: isFreeTrialPlan(resolved),

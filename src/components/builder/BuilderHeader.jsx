@@ -7,7 +7,7 @@ import { DEFAULT_SURVEY_TITLE } from '@/constants/surveyDefaults'
 import { SURVEY_STATUSES } from '@/utils/data/platformStore'
 import { prefetchPreview } from '@/utils/routing/routePrefetch'
 import {
-  Eye, BarChart3, Download, PlayCircle, Menu, Save, ChevronDown,
+  Eye, BarChart3, Download, PlayCircle, Menu, Save, ChevronDown, Upload,
 } from 'lucide-react'
 
 export function BuilderHeader({
@@ -23,6 +23,7 @@ export function BuilderHeader({
   onOpenTest,
   onOpenPreview,
   onSave,
+  onImportQuestions,
 }) {
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-ink-200/80 sticky top-0 z-30 safe-top">
@@ -50,6 +51,7 @@ export function BuilderHeader({
                 onOpenTest={onOpenTest}
                 onOpenPreview={onOpenPreview}
                 onSave={onSave}
+                onImportQuestions={onImportQuestions}
               />
 
               <MobileToolbar
@@ -88,6 +90,16 @@ function BuilderDocumentBar({ survey, dispatch, saveStatus, isDirty }) {
         >
           {statusMeta.label}
         </span>
+        {survey.importMeta?.importedAt && (
+          <span className="hidden md:inline text-[10px] text-violet-700 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded shrink-0" title="Review imported content before publishing">
+            Imported
+          </span>
+        )}
+        {survey.status === 'pending_review' && (
+          <span className="hidden lg:inline text-[10px] text-violet-800 max-w-[12rem] truncate" title="Set status to Draft or Live after review">
+            Review required
+          </span>
+        )}
 
         <label className="sr-only" htmlFor="builder-header-title">Survey title</label>
         <input
@@ -161,9 +173,21 @@ function DesktopActions({
   onOpenTest,
   onOpenPreview,
   onSave,
+  onImportQuestions,
 }) {
   return (
     <div className="hidden sm:flex items-center gap-2">
+      {onImportQuestions && (
+        <button
+          type="button"
+          onClick={onImportQuestions}
+          title="Import questions (append)"
+          className={`${HEADER_ACTION_BASE} border border-ink-200 text-ink-600 hover:text-ink-900 hover:bg-ink-50`}
+        >
+          <Upload size={16} className="text-ink-400 shrink-0" />
+          <span className="hidden md:inline">Import</span>
+        </button>
+      )}
       <button
         type="button"
         onClick={onOpenPreview}

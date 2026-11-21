@@ -1,16 +1,29 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { PageLoader } from '@/components/ui'
 import { useSurveyBuilder } from '@/components/builder/hooks/useSurveyBuilder'
 import { BuilderHeader } from '@/components/builder/BuilderHeader'
 import { BuilderWorkspace } from '@/components/builder/BuilderWorkspace'
 import { BuilderMobileChrome } from '@/components/builder/BuilderMobileChrome'
 import { BuilderModals } from '@/components/builder/BuilderModals'
+import { ImportQuestionsModal } from '@/components/builder/ImportQuestionsModal'
+import { fetchImportCapabilities } from '@/api/survey/import'
+import { useApi } from '@/config/api'
+import { getSurvey } from '@/api/survey/surveys'
 import { AppAlignedBody } from '@/components/shared/layout/AppBuilderShell.jsx'
 
 const SurveyPreview = lazy(() => import('@/components/taker/SurveyPreview.jsx'))
 
 export function SurveyBuilder({ initialState, initialRevision = null, onBackToDashboard, openExport = false }) {
   const builder = useSurveyBuilder({ initialState, initialRevision, openExport })
+  const [showImportQuestions, setShowImportQuestions] = useState(false)
+  const [canImport, setCanImport] = useState(false)
+
+  useEffect(() => {
+    if (!useApi) return
+    fetchImportCapabilities()
+      .then(d => setCanImport(Boolean(d?.surveyImport)))
+      .catch(() => setCanImport(false))
+  }, [])
 
   if (builder.state.showPreview) {
     return (
@@ -40,6 +53,7 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
         onOpenTest={() => builder.setShowTest(true)}
         onOpenPreview={builder.openPreview}
         onSave={builder.handleSave}
+        onImportQuestions={canImport ? () => setShowImportQuestions(true) : undefined}
       />
 
       <AppAlignedBody
@@ -85,6 +99,20 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
         items={builder.state.items}
         onCloseTest={() => builder.setShowTest(false)}
         onCloseExport={() => builder.setShowExport(false)}
+      />
+
+      <ImportQuestionsModal
+        open={showImportQuestions}
+        onClose={() => setShowImportQuestions(false)}
+        surveyId={builder.state.survey.id}
+        onAppended={async () => {
+          const remote = await getSurvey(builder.state.survey.id)
+          builder.dispatch({
+            type: 'HYDRATE_FROM_SERVER',
+            survey: remote.survey,
+            items: remote.items || [],
+          })
+        }}
       />
     </div>
   )

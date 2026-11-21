@@ -13,24 +13,8 @@ import { enforceSurveyBranding, loadOrgPlanContext } from '../lib/branding/brand
 import { assertCanCreateSurvey } from '../lib/billing/planEnforcement.js'
 import { sanitizeSurveyHtml, sanitizeSurveyItems } from '../lib/survey/sanitizeHtml.js'
 import { appendAudit } from '../lib/audit.js'
-
-async function loadPlatformLists(prisma, organizationId) {
-  const [clients, topics, surveyTypes] = await Promise.all([
-    prisma.client.findMany({
-      where: { organizationId },
-      select: { id: true, name: true },
-    }),
-    prisma.topic.findMany({
-      where: { organizationId },
-      select: { id: true, name: true },
-    }),
-    prisma.surveyType.findMany({
-      where: { organizationId },
-      select: { id: true, name: true },
-    }),
-  ])
-  return { clients, topics, surveyTypes }
-}
+import { loadPlatformLists } from '../lib/survey/platformLists.js'
+import { prepareSurveyData, persistNewSurvey } from '../lib/survey/persistSurvey.js'
 
 function denyWithoutBuilder(request, reply) {
   if (request.auth?.canUseBuilder === false) {
@@ -189,46 +173,23 @@ export async function registerSurveyRoutes(app) {
       return reply.code(403).send({ error: surveyLimit.error, code: surveyLimit.code })
     }
 
-    const { clients, topics, surveyTypes } = await loadPlatformLists(app.prisma, request.organizationId)
-    const { planId } = await loadOrgPlanContext(app.prisma, request.organizationId)
-
-    const { survey: withPath, publicPath } = await assignPublicPath(
-      app.prisma,
-      enforceSurveyBranding(
-        { ...sanitizeSurveyHtml(survey), id, updatedAt: new Date().toISOString() },
-        planId,
-      ),
-    )
-
-    const surveyData = normalizeSurveyPlatformIds(withPath, clients, topics, surveyTypes)
-
-    const created = await app.prisma.survey.create({
-      data: {
-        id,
-        organizationId: request.organizationId,
-        createdById:    request.auth.userId,
-        publicPath,
-        survey: surveyData,
-        items: sanitizeSurveyItems(items),
-        revision: 1,
-      },
+    const created = await persistNewSurvey(app.prisma, {
+      organizationId: request.organizationId,
+      userId: request.auth.userId,
+      surveyId: id,
+      survey,
+      items,
+      cache: app.cache,
+      auditActorId: request.auth.userId,
     })
-
-    app.cache.invalidateSurvey(created.id, request.organizationId)
-    if (surveyData?.status === 'live') {
-      await appendAudit(app.prisma, {
-        organizationId: request.organizationId,
-        actorId: request.auth.userId,
-        action: 'survey.publish',
-        targetEntity: 'Survey',
-        targetId: created.id,
-      })
+    if (!created.ok) {
+      return reply.code(created.status).send(created.body)
     }
     return reply.code(201).send({
-      id:         created.id,
-      revision:   created.revision,
-      updatedAt:  created.updatedAt.toISOString(),
-      publicPath: created.publicPath,
+      id:         created.body.id,
+      revision:   created.body.revision,
+      updatedAt:  created.body.updatedAt,
+      publicPath: created.body.publicPath,
     })
   })
 

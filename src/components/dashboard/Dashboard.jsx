@@ -32,6 +32,9 @@ import {
 } from '@/utils/platform/permissions'
 import { useResponseNotifications } from '@/hooks/useResponseNotifications'
 import { EmailVerificationBanner } from './EmailVerificationBanner.jsx'
+import { ImportSurveyModal } from './ImportSurveyModal.jsx'
+import { fetchImportCapabilities } from '@/api/survey/import'
+import { Upload } from 'lucide-react'
 
 const PlatformSettings = lazy(() => import('./PlatformSettings.jsx'))
 const TeamPanel        = lazy(() => import('./TeamPanel.jsx'))
@@ -212,7 +215,7 @@ function SurveyMenu({ onOpen, onPreview, onDuplicate, onDelete }) {
 // ─── Stats bar ─────────────────────────────────────────────────────────────
 function StatsBar({ surveys }) {
   const counts = useMemo(() => {
-    const c = { total: surveys.length, draft: 0, live: 0, paused: 0, closed: 0 }
+    const c = { total: surveys.length, draft: 0, pending_review: 0, live: 0, paused: 0, closed: 0 }
     surveys.forEach(s => { if (c[s.survey?.status] !== undefined) c[s.survey?.status]++ })
     return c
   }, [surveys])
@@ -221,6 +224,7 @@ function StatsBar({ surveys }) {
     { label: 'Total surveys', short: 'Total', value: counts.total, icon: Layers,       color: 'text-brand-600 bg-brand-50' },
     { label: 'Live',          short: 'Live',  value: counts.live,  icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
     { label: 'Drafts',        short: 'Drafts', value: counts.draft, icon: Edit3,        color: 'text-ink-600 bg-ink-100' },
+    { label: 'Pending',       short: 'Pending', value: counts.pending, icon: Eye, color: 'text-violet-600 bg-violet-50' },
     { label: 'Paused',        short: 'Paused', value: counts.paused, icon: PauseCircle, color: 'text-amber-600 bg-amber-50' },
     { label: 'Closed',        short: 'Closed', value: counts.closed, icon: XCircle,     color: 'text-rose-600 bg-rose-50' },
   ]
@@ -268,6 +272,8 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
   const [showTeamMembers, setShowTeamMembers] = useState(false)
   const [showTeamActivity, setShowTeamActivity] = useState(false)
   const [deleteId, setDeleteId]     = useState(null)
+  const [showImport, setShowImport]   = useState(false)
+  const [canImport, setCanImport]   = useState(false)
   const migrateAttemptedRef = useRef(false)
 
   const refresh = useCallback(async ({ allowMigrate = false } = {}) => {
@@ -302,6 +308,13 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
       setApiLoading(false)
     }
   }, [toast])
+
+  useEffect(() => {
+    if (!useApi) return
+    fetchImportCapabilities()
+      .then(data => setCanImport(Boolean(data?.surveyImport)))
+      .catch(() => setCanImport(false))
+  }, [])
 
   useEffect(() => {
     if (panelOnly) return
@@ -525,6 +538,15 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
             <TeamPanel onClose={() => setShowTeamActivity(false)} />
           </Suspense>
         )}
+        <ImportSurveyModal
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          canImport={canImport}
+          onImported={data => {
+            refresh()
+            if (data?.surveyId) onOpenSurvey(data.surveyId)
+          }}
+        />
       </div>
     )
   }
@@ -537,6 +559,8 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
         <DashboardHeader
           session={session}
           onNewSurvey={onNewSurvey}
+          onImportSurvey={canImport ? () => setShowImport(true) : undefined}
+          canImportSurvey={canImport}
           onGoHome={() => {
             setShowAccount(false)
             setShowSettings(false)
@@ -547,7 +571,7 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
           onOpenAccount={() => setShowAccount(true)}
           onOpenTeamMembers={() => setShowTeamMembers(true)}
           onOpenTeamActivity={() => setShowTeamActivity(true)}
-            notifications={{
+          notifications={{
               payload: notifications.unread,
               loading: notifications.loading,
               error: notifications.error,
@@ -974,6 +998,16 @@ export function Dashboard({ onOpenSurvey, onNewSurvey, onPreviewSurvey, session,
           <TeamPanel onClose={() => setShowTeamActivity(false)} />
         </Suspense>
       )}
+
+      <ImportSurveyModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        canImport={canImport}
+        onImported={data => {
+          refresh()
+          if (data?.surveyId) onOpenSurvey(data.surveyId)
+        }}
+      />
     </div>
   )
 }

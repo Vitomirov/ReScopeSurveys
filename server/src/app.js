@@ -31,6 +31,11 @@ import { registerDncRoutes } from './routes/dnc.js'
 import { registerAdminRoutes } from './routes/admin.js'
 import { registerBillingRoutes, registerVendorRoutes } from './routes/billing.js'
 import { registerInternalRoutes } from './routes/internal.js'
+import { registerSurveyImportRoutes } from './routes/surveyImport.js'
+import {
+  registerIntegrationKeyRoutes,
+  registerIntegrationWebhookRoutes,
+} from './routes/integrationKeys.js'
 import { loadConfig } from './config.js'
 import { publicErrorResponse } from './lib/httpErrors.js'
 
@@ -97,6 +102,9 @@ export async function buildApp() {
   await registerDashboardRoutes(app)
   await registerNotificationRoutes(app)
   await registerSurveyRoutes(app)
+  await registerSurveyImportRoutes(app)
+  await registerIntegrationKeyRoutes(app)
+  await registerIntegrationWebhookRoutes(app)
   await registerExportRoutes(app)
   await registerResponseRoutes(app)
   await registerPlatformRoutes(app)

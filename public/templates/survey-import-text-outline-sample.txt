@@ -1,0 +1,19 @@
+How satisfied are you with our product overall?
+() Very satisfied
+() Somewhat satisfied
+() Neutral
+() Somewhat dissatisfied
+() Very dissatisfied
+
+Which of the following features do you use regularly? (Select all that apply)
+[] Reporting and Analytics
+[] Automated Workflows
+[] Third-Party Integrations
+[] Custom Templates
+
+What is your current job title?
+____
+
+Please share any additional feedback or suggestions for improvement:
+____
+____

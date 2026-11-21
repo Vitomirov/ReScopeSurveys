@@ -24,7 +24,7 @@ const PUBLIC_EXACT = new Set([
   '/api/oauth/token',
   '/api/oauth/org-surveys',
 ])
-const PUBLIC_PREFIXES = ['/api/public/', '/api/internal/']
+const PUBLIC_PREFIXES = ['/api/public/', '/api/internal/', '/api/integrations/']
 
 function isPublicRoute(url) {
   const path = url.split('?')[0]

@@ -26,7 +26,9 @@ model Organization {
   surveyTypes    SurveyType[]
   subscription   Subscription?
   invoices       Invoice[]
-  authTokens     AuthToken[]
+  authTokens            AuthToken[]
+  integrationKeys       OrganizationIntegrationKey[]
+  surveyImports         SurveyImport[]
 
   @@map("organizations")
 }
@@ -134,6 +136,7 @@ model Survey {
   createdBy    User?        @relation("SurveyCreator", fields: [createdById], references: [id], onDelete: SetNull)
   responses     Response[]
   surveyExports SurveyExport[]
+  surveyImports SurveyImport[]
   dncEntries    DncEntry[]
 
   @@unique([publicPath])
@@ -196,6 +199,46 @@ model SurveyExport {
   @@index([surveyId, exportedAt(sort: Desc)])
   @@index([organizationId])
   @@map("survey_exports")
+}
+
+/// Per-organization API keys for survey import webhooks (hashed at rest).
+model OrganizationIntegrationKey {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  name           String    @map("integration_key_name")
+  keyPrefix      String    @map("integration_key_prefix")
+  keyHash        String    @unique @map("integration_key_hash")
+  scopes         Json      @default("[\"survey.import\"]") @map("integration_key_scopes")
+  createdById    String?   @map("integration_key_created_by_id")
+  revokedAt      DateTime? @map("integration_key_revoked_at")
+  lastUsedAt     DateTime? @map("integration_key_last_used_at")
+  createdAt      DateTime  @default(now()) @map("integration_key_created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([keyPrefix])
+  @@map("organization_integration_keys")
+}
+
+/// Audit row for import attempts (success or failure).
+model SurveyImport {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  surveyId       String?  @map("survey_id")
+  source         String   @map("survey_import_source")
+  status         String   @map("survey_import_status")
+  externalId     String?  @map("survey_import_external_id")
+  errorReport    Json?    @map("survey_import_error_report")
+  createdById    String?  @map("survey_import_created_by_id")
+  createdAt      DateTime @default(now()) @map("survey_import_created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  survey       Survey?      @relation(fields: [surveyId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("survey_imports")
 }
 
 model Client {

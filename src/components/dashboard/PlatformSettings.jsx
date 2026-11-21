@@ -24,6 +24,9 @@ const DomainVerificationPanel = lazy(() =>
 const BillingPanel = lazy(() =>
   import('./BillingPanel.jsx').then(m => ({ default: m.BillingPanel })),
 )
+const IntegrationKeysPanel = lazy(() =>
+  import('./IntegrationKeysPanel.jsx').then(m => ({ default: m.IntegrationKeysPanel })),
+)
 
 const BASE_SETTINGS_TABS = [
   ['lists', 'Classification labels'],
@@ -111,11 +114,16 @@ export function PlatformSettings({ onClose, session, embedded = false, hideHeade
 
   const listsLoaded = useRef(!useApi)
 
-  const settingsTabs = useMemo(() => (
-    canViewBilling(session)
-      ? [...BASE_SETTINGS_TABS, ['billing', 'Billing']]
-      : BASE_SETTINGS_TABS
-  ), [session])
+  const settingsTabs = useMemo(() => {
+    let tabs = [...BASE_SETTINGS_TABS]
+    if (billingOverview?.planFeatures?.surveyImport) {
+      tabs = [...tabs, ['integrations', 'Integration keys']]
+    }
+    if (canViewBilling(session)) {
+      tabs = [...tabs, ['billing', 'Billing']]
+    }
+    return tabs
+  }, [session, billingOverview?.planFeatures?.surveyImport])
 
   const loadLists = useCallback(async () => {
     if (!useApi || listsLoaded.current) return
@@ -156,7 +164,7 @@ export function PlatformSettings({ onClose, session, embedded = false, hideHeade
   }, [loadLists])
 
   useEffect(() => {
-    if (!useApi || tab !== 'billing') return
+    if (!useApi || (tab !== 'billing' && tab !== 'integrations')) return
     ensureBillingOverview()
   }, [tab, ensureBillingOverview])
 
@@ -311,6 +319,10 @@ export function PlatformSettings({ onClose, session, embedded = false, hideHeade
         ) : tab === 'brandKit' ? (
           <Suspense fallback={TAB_FALLBACK}>
             <BrandKitPanel embedded />
+          </Suspense>
+        ) : tab === 'integrations' ? (
+          <Suspense fallback={TAB_FALLBACK}>
+            <IntegrationKeysPanel />
           </Suspense>
         ) : tab === 'billing' ? (
           <Suspense fallback={TAB_FALLBACK}>

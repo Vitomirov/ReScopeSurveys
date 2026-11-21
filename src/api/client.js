@@ -72,10 +72,14 @@ function invalidateSession(code) {
   notifyAuthInvalidated(code || 'UNAUTHORIZED')
 }
 
+function isMultipartOrBinaryBody(body) {
+  return body instanceof FormData || body instanceof URLSearchParams || body instanceof Blob
+}
+
 export async function apiFetch(path, options = {}) {
   const { skipAuthInvalidate = false, skipRefresh = false, _retry = false, ...fetchOptions } = options
   const headers = { ...fetchOptions.headers }
-  if (fetchOptions.body != null && !headers['Content-Type']) {
+  if (fetchOptions.body != null && !headers['Content-Type'] && !isMultipartOrBinaryBody(fetchOptions.body)) {
     headers['Content-Type'] = 'application/json'
   }
 

@@ -31,6 +31,7 @@ Security posture and remediation roadmap: [SECURITY_AUDIT.md](SECURITY_AUDIT.md)
 | [CODE_REFERENCE.md](CODE_REFERENCE.md) | Frontend module layout, store actions, logic engines, and API surface |
 | [ERROR_HANDLING.md](ERROR_HANDLING.md) | API and SPA error contracts, Prisma mapping, auth codes, and verification |
 | [SMOKE_CHECKLIST.md](SMOKE_CHECKLIST.md) | Manual QA checklist for builder, taker, and export flows |
+| [SURVEY_IMPORT.md](SURVEY_IMPORT.md) | Enterprise survey import — workbook, text outline, n8n webhook, templates |
 
 ---
 

@@ -164,6 +164,7 @@ export function createRouteLimiters({
     responses: create({ windowMs: MINUTE_MS, max: 30 * factor }),
     surveyResponses: create({ windowMs: MINUTE_MS, max: 300 * factor }),
     caddyAsk: create({ windowMs: MINUTE_MS, max: 60 * factor }),
+    importWebhook: create({ windowMs: MINUTE_MS, max: 30 * factor }),
   }
 }
 

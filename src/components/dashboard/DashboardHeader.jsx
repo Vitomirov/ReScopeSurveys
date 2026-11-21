@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import {
-  Plus, Users, User, BarChart3,
+  Plus, Users, User, BarChart3, Upload,
 } from 'lucide-react'
 import {
   AppShell,
@@ -109,6 +109,8 @@ function UserMenu({
 export function DashboardHeader({
   session,
   onNewSurvey,
+  onImportSurvey,
+  canImportSurvey,
   onGoHome,
   onLogout,
   onOpenAccount,
@@ -126,6 +128,16 @@ export function DashboardHeader({
             <AppLogo onClick={onGoHome} size="md" className="shrink-0 min-w-0" />
 
             <div className={APP_HEADER_ACTIONS}>
+              {canImportSurvey && onImportSurvey && (
+                <button
+                  type="button"
+                  onClick={onImportSurvey}
+                  className="inline-flex items-center gap-1.5 h-9 sm:h-10 rounded-xl px-2.5 sm:px-4 text-sm font-semibold border border-ink-200 text-ink-700 hover:bg-ink-50 shrink-0"
+                >
+                  <Upload size={16} className="shrink-0" aria-hidden />
+                  <span className="hidden sm:inline">Import</span>
+                </button>
+              )}
               {session?.canUseBuilder !== false && (
                 <button
                   type="button"

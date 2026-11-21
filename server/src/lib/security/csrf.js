@@ -24,6 +24,7 @@ const CSRF_EXEMPT_EXACT = new Set([
 const CSRF_EXEMPT_PREFIXES = [
   '/api/public/',
   '/api/internal/',
+  '/api/integrations/',
 ]
 
 export function generateCsrfToken() {
