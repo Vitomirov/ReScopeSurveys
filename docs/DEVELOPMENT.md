@@ -4,6 +4,18 @@ Set up a local environment for feature work, debugging, and pre-release verifica
 
 **Related:** [ARCHITECTURE.md](ARCHITECTURE.md) · [CODE_REFERENCE.md](CODE_REFERENCE.md) · [CI.md](CI.md) · [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
+## Agent skills
+
+Project playbooks in `.cursor/skills/` (invoke by name; they do not load on every chat):
+
+- `production-redeploy` — VPS release without deleting the Postgres volume
+- `prisma-production-migration` — schema changes that run on API startup
+- `production-backup-restore` — dumps and throwaway restore drills
+- `rescope-local-dev` — `dev:docker` loop
+- `rescope-pre-ship-verify` — which tests to run
+- `rescope-debug` — HTTP failure triage
+- `smoke-qa-manual` — manual checklist after persistence changes
+
 ---
 
 ## Prerequisites
