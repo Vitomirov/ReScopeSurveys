@@ -224,7 +224,7 @@ function StatsBar({ surveys }) {
     { label: 'Total surveys', short: 'Total', value: counts.total, icon: Layers,       color: 'text-brand-600 bg-brand-50' },
     { label: 'Live',          short: 'Live',  value: counts.live,  icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
     { label: 'Drafts',        short: 'Drafts', value: counts.draft, icon: Edit3,        color: 'text-ink-600 bg-ink-100' },
-    { label: 'Pending',       short: 'Pending', value: counts.pending, icon: Eye, color: 'text-violet-600 bg-violet-50' },
+    { label: 'Pending',       short: 'Pending', value: counts.pending_review, icon: Eye, color: 'text-violet-600 bg-violet-50' },
     { label: 'Paused',        short: 'Paused', value: counts.paused, icon: PauseCircle, color: 'text-amber-600 bg-amber-50' },
     { label: 'Closed',        short: 'Closed', value: counts.closed, icon: XCircle,     color: 'text-rose-600 bg-rose-50' },
   ]

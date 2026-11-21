@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react'
 import { PageLoader } from '@/components/ui'
 import { useSurveyBuilder } from '@/components/builder/hooks/useSurveyBuilder'
 import { BuilderHeader } from '@/components/builder/BuilderHeader'
@@ -10,6 +10,7 @@ import { fetchImportCapabilities } from '@/api/survey/import'
 import { useApi } from '@/config/api'
 import { getSurvey } from '@/api/survey/surveys'
 import { AppAlignedBody } from '@/components/shared/layout/AppBuilderShell.jsx'
+import { ImportReviewBanner } from '@/components/builder/ImportReviewBanner.jsx'
 
 const SurveyPreview = lazy(() => import('@/components/taker/SurveyPreview.jsx'))
 
@@ -24,6 +25,19 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
       .then(d => setCanImport(Boolean(d?.surveyImport)))
       .catch(() => setCanImport(false))
   }, [])
+
+  const importItemWarnings = useMemo(() => {
+    const out = []
+    for (const item of builder.state.items || []) {
+      if (item.importMeta?.partial && item.itemType === 'question') {
+        out.push({
+          code: 'PARTIAL_TYPE',
+          message: `${item.text || 'Untitled'} (${item.questionType}): finish setup in builder.`,
+        })
+      }
+    }
+    return out
+  }, [builder.state.items])
 
   if (builder.state.showPreview) {
     return (
@@ -54,6 +68,11 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
         onOpenPreview={builder.openPreview}
         onSave={builder.handleSave}
         onImportQuestions={canImport ? () => setShowImportQuestions(true) : undefined}
+      />
+
+      <ImportReviewBanner
+        survey={builder.state.survey}
+        itemWarnings={importItemWarnings}
       />
 
       <AppAlignedBody

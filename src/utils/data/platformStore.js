@@ -9,7 +9,7 @@ const SURVEY_TYPES_KEY = 'sf_platform_survey_types'
 
 export const SURVEY_STATUSES = [
   { id: 'draft',  label: 'Draft',  color: 'text-ink-600  bg-ink-100  border-ink-200' },
-  { id: 'pending', label: 'Pending', color: 'text-violet-700 bg-violet-100 border-violet-200' },
+  { id: 'pending_review', label: 'Pending', color: 'text-violet-700 bg-violet-100 border-violet-200' },
   { id: 'live',   label: 'Live',   color: 'text-emerald-700 bg-emerald-100 border-emerald-200' },
   { id: 'paused', label: 'Paused', color: 'text-amber-700 bg-amber-100 border-amber-200' },
   { id: 'closed', label: 'Closed', color: 'text-rose-700  bg-rose-100  border-rose-200' },

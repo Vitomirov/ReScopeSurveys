@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { tierForQuestionType, TIER_C_IMAGE } from '../../../../../shared/surveyImport/questionTiers.js'
+import { createQuestionConfigBundle } from '../../../../../shared/survey/questionConfigDefaults.js'
 
 function baseVisibility() {
   return { enabled: false, mode: 'show_if', conditions: [] }
@@ -17,6 +18,7 @@ function makeOption(text, id) {
 }
 
 function makeQuestionSkeleton(questionType, text, id, { partial = false } = {}) {
+  const typeConfigs = createQuestionConfigBundle(() => randomUUID())
   const base = {
     id,
     itemType: 'question',
@@ -44,13 +46,7 @@ function makeQuestionSkeleton(questionType, text, id, { partial = false } = {}) 
     externalRedirectRules: [],
     externalRedirectLogic: 'if_any',
     externalRedirectNoneUrl: '',
-    openTextConfig: {
-      multiline: false,
-      placeholder: 'Your answer',
-      minLength: null,
-      maxLength: null,
-      validation: { type: 'none', numberMin: null, numberMax: null },
-    },
+    ...typeConfigs,
   }
   if (partial) {
     base.importMeta = { partial: true }
@@ -114,19 +110,16 @@ export function buildRuntimeItems(importItems, codeToId, { warnings = [] } = {})
     }
 
     if (raw.questionType === 'matrix' && tier === 'A') {
-      q.matrixConfig = {
-        subType: 'single',
-        rows: [{ id: randomUUID(), text: 'Row 1' }],
-        columns: [{ id: randomUUID(), text: 'Column 1' }],
-        randomizeRows: false,
-      }
-      warnings.push({ code: 'MATRIX_MINIMAL', message: `Matrix ${raw.code} imported with placeholder rows/columns.` })
+      warnings.push({
+        code: 'MATRIX_DEFAULTS',
+        message: `Matrix ${raw.code}: rows/columns use builder defaults — review and edit in builder.`,
+      })
     }
 
     if (tier === 'B') {
       warnings.push({
         code: 'PARTIAL_TYPE',
-        message: `Question ${raw.code} (${raw.questionType}) imported as stub — complete in builder.`,
+        message: `Question ${raw.code} (${raw.questionType}): finish setup in builder before going Live.`,
       })
     }
 
