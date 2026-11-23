@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { TIER_A_FULL, TIER_B_PARTIAL } from '../../../../../shared/surveyImport/questionTiers.js'
+import {
+  TIER_A_FULL,
+  TIER_B_PARTIAL,
+  normalizeImportQuestionType,
+} from '../../../../../shared/surveyImport/questionTiers.js'
 
 const codeRegex = /^[A-Za-z][A-Za-z0-9_]{0,63}$/
 
@@ -87,6 +91,9 @@ function stripNullFields(obj) {
 function sanitizeImportItem(item) {
   if (!item || typeof item !== 'object') return item
   const base = stripNullFields(item)
+  if (base.itemType === 'question' && base.questionType) {
+    base.questionType = normalizeImportQuestionType(base.questionType)
+  }
   if (Array.isArray(base.options)) {
     base.options = base.options
       .filter(opt => opt && opt.code != null && opt.text != null)

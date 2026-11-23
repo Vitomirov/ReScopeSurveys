@@ -2,29 +2,10 @@ import { useState, useRef } from 'react'
 import { Upload, FileText, X, Download } from 'lucide-react'
 import { importSurveyFormData } from '@/api/survey/import'
 import { ApiError } from '@/api/client'
+import { TEXT_OUTLINE_SAMPLE } from '@shared/surveyImport/textOutlineSample.js'
 
 const TEMPLATE_XLSX = '/templates/survey-import-template.xlsx'
 const TEMPLATE_TXT = '/templates/survey-import-text-outline-sample.txt'
-
-const SAMPLE_OUTLINE = `How satisfied are you with our product overall?
-() Very satisfied
-() Somewhat satisfied
-() Neutral
-() Somewhat dissatisfied
-() Very dissatisfied
-
-Which of the following features do you use regularly? (Select all that apply)
-[] Reporting and Analytics
-[] Automated Workflows
-[] Third-Party Integrations
-[] Custom Templates
-
-What is your current job title?
-____
-
-Please share any additional feedback or suggestions for improvement:
-____
-____`
 
 export function ImportSurveyModal({ open, onClose, onImported, canImport }) {
   const [tab, setTab] = useState('file')
@@ -171,7 +152,7 @@ export function ImportSurveyModal({ open, onClose, onImported, canImport }) {
             <button
               type="button"
               className="text-xs text-brand-600 mt-2 hover:underline"
-              onClick={() => setText(SAMPLE_OUTLINE)}
+              onClick={() => setText(TEXT_OUTLINE_SAMPLE)}
             >
               Insert sample outline
             </button>

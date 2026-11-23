@@ -11,21 +11,38 @@ export const TIER_A_FULL = new Set([
 ])
 
 export const TIER_B_PARTIAL = new Set([
-  'max_diff',
-  'semantic_differential',
-  'bipolar',
+  'maxdiff',
+  'semantic_diff',
+  'bipolar_matrix',
   'constant_sum',
   'card_sort',
   'ranking',
   'slider',
   'nps',
+  'star_rating',
   'cascade',
   'date',
   'phone',
-  'image_choice',
+  'textbox_list',
+  'image_choice_single',
+  'image_choice_multi',
 ])
 
-export const TIER_C_IMAGE = new Set(['image_choice'])
+/** Legacy / AI payloads → builder questionType keys */
+export const IMPORT_QUESTION_TYPE_ALIASES = {
+  max_diff: 'maxdiff',
+  semantic_differential: 'semantic_diff',
+  bipolar: 'bipolar_matrix',
+  image_choice: 'image_choice_single',
+}
+
+export function normalizeImportQuestionType(questionType) {
+  const key = String(questionType || '').trim()
+  if (!key) return key
+  return IMPORT_QUESTION_TYPE_ALIASES[key] || key
+}
+
+export const TIER_C_IMAGE = new Set(['image_choice_single', 'image_choice_multi'])
 
 export const IMPORT_PENDING_STATUS = 'pending_review'
 

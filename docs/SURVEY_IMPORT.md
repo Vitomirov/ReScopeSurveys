@@ -59,17 +59,24 @@ Import (any channel) → pending → human QA in builder → Draft or Live
 
 ### Text outline tab
 
-Paste plain text using **ReScope text outline** rules (blank line between questions):
+Paste plain text using **ReScope text outline** rules (blank line between blocks; lines starting with `#` are comments):
 
 | Pattern | Question type |
 |---------|----------------|
-| Stem, then lines starting with `()` | Single select |
-| Stem, then lines starting with `[]` | Multi select |
-| Stem + one `____` line | Short open text |
-| Stem + multiple `____` lines | Long open text |
-| “Select all that apply” in stem | Multi select |
+| Stem, then lines starting with `()` | `single_select` |
+| Stem, then lines starting with `[]` | `multi_select` |
+| “Select all that apply” in stem | `multi_select` |
+| `@dropdown` + stem + `()` options | `dropdown` |
+| Stem + one `____` line | Short `open_text` |
+| Stem + multiple `____` lines | Long `open_text` |
+| `@matrix` + stem + `row:` / `col:` lines | `matrix` |
+| `@page_break` alone | Page break |
+| `@text_block` (+ title) + body lines | Text block |
+| `@nps`, `@slider`, `@date`, … | Tier B types (finish in builder) |
+| Option line suffix `{screenout}` / `{terminates}` | Screening option |
+| Option line suffix `{exclusive}` | Multi “none of the above” |
 
-Use **Insert sample outline** in the modal for a quick test.
+Full reference: `public/templates/survey-import-text-outline-sample.txt` and workbook sheet **QuestionTypes**. Use **Insert sample outline** in the modal for a quick test.
 
 ### After import
 
@@ -127,9 +134,12 @@ Two columns: `key`, `value` (one setting per row).
 
 ### Question types (import tiers)
 
-- **Full support (v1):** `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` (minimal grid; review in builder), `page_break`, `text_block`
-- **Partial stub:** advanced types (e.g. max-diff, slider) — title + type saved; finish setup in builder (warnings shown)
-- **Images:** no binary image import; image choice may import as stub or error
+Canonical keys match the builder (`questionHelpers.js`). Workbook sheet **QuestionTypes** lists every type with text-outline hints.
+
+- **Tier A (full):** `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` (defaults for rows/columns — review in builder), `page_break`, `text_block`
+- **Tier B (partial stub):** `maxdiff`, `semantic_diff`, `bipolar_matrix`, `constant_sum`, `card_sort`, `ranking`, `slider`, `nps`, `star_rating`, `cascade`, `date`, `phone`, `textbox_list`, `image_choice_single`, `image_choice_multi` — stem + type imported; finish setup in builder (warnings shown)
+- **Legacy JSON aliases** (normalized on import): `max_diff` → `maxdiff`, `semantic_differential` → `semantic_diff`, `bipolar` → `bipolar_matrix`, `image_choice` → `image_choice_single`
+- **Images:** no binary image import; add images in the builder after import
 
 `settings.onePerPage` in JSON/webhook can insert page breaks between questions when enabled (workbook path uses item list order as authored).
 
@@ -285,6 +295,7 @@ When generating webhook JSON:
 - One page break item between pages if `settings.onePerPage` is true (JSON).
 - Screening: `terminates: true` on options or termination rules (advanced sheets — phase 2).
 - Branch targets reference **page break codes** that appear later in `items[]`.
+- Use builder `questionType` keys (`maxdiff`, `semantic_diff`, `bipolar_matrix`, `image_choice_single`, …). Legacy aliases above are accepted.
 - Partial types: still emit `questionType` and `text` so the stub appears in the builder.
 
 ---
