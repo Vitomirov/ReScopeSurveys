@@ -26,17 +26,17 @@ export function parseWorkbookBuffer(buffer) {
   const itemRows = sheetToRows(wb, 'Items') || []
   const optionRows = sheetToRows(wb, 'Options') || []
 
+  const yes = v => ['y', 'yes', 'true', '1'].includes(String(v ?? '').trim().toLowerCase())
   const optionsByQuestion = new Map()
   for (const row of optionRows) {
     const qCode = String(row.questionCode ?? row.QuestionCode ?? '').trim()
     if (!qCode) continue
     if (!optionsByQuestion.has(qCode)) optionsByQuestion.set(qCode, [])
-    const terminates = ['Y', 'yes', 'true', '1'].includes(String(row.terminates ?? row.Terminates ?? '').trim().toLowerCase())
     optionsByQuestion.get(qCode).push({
       code: String(row.optionCode ?? row.OptionCode ?? '').trim(),
       text: String(row.text ?? row.Text ?? '').trim(),
-      terminates,
-      isExclusive: ['Y', 'yes', 'true', '1'].includes(String(row.isExclusive ?? '').trim().toLowerCase()),
+      terminates: yes(row.terminates ?? row.Terminates),
+      isExclusive: yes(row.isExclusive ?? row.IsExclusive),
     })
   }
 
