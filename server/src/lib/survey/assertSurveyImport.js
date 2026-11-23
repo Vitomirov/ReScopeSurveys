@@ -1,5 +1,5 @@
 /**
- * Enterprise plan gate for survey import (file, text, webhook).
+ * Enterprise plan gate for survey import (file, text, MCP / HTTP import).
  */
 import { canUseSurveyImport } from '../../../../shared/planFeatures.js'
 import { assertOrgActive } from '../billing/planEnforcement.js'

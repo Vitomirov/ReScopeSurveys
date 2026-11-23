@@ -36,6 +36,7 @@ import {
   registerIntegrationKeyRoutes,
   registerIntegrationWebhookRoutes,
 } from './routes/integrationKeys.js'
+import { registerMcpRoutes } from './routes/mcp.js'
 import { loadConfig } from './config.js'
 import { publicErrorResponse } from './lib/httpErrors.js'
 
@@ -105,6 +106,7 @@ export async function buildApp() {
   await registerSurveyImportRoutes(app)
   await registerIntegrationKeyRoutes(app)
   await registerIntegrationWebhookRoutes(app)
+  await registerMcpRoutes(app)
   await registerExportRoutes(app)
   await registerResponseRoutes(app)
   await registerPlatformRoutes(app)

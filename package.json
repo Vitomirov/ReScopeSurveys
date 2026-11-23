@@ -22,7 +22,7 @@
     "test:dnc-phase2": "node --test scripts/tests/integration/dnc/dnc-enforcement.test.mjs",
     "test:phase3": "node --test scripts/tests/unit/question-numbering-piping.test.mjs",
     "test:phase4": "node --test scripts/tests/unit/reducer-helpers.test.mjs",
-    "test:survey-import": "node --test scripts/tests/unit/survey-import-outline.test.mjs scripts/tests/unit/survey-import-schema.test.mjs scripts/tests/integration/survey-import/survey-import.test.mjs",
+    "test:survey-import": "node --test scripts/tests/unit/survey-import-outline.test.mjs scripts/tests/unit/survey-import-schema.test.mjs scripts/tests/unit/mcp-create-preview.test.mjs scripts/tests/integration/survey-import/survey-import.test.mjs scripts/tests/integration/survey-import/mcp-import.test.mjs",
     "test:track-a": "node --test scripts/tests/unit/builder-layout.test.mjs scripts/tests/unit/question-numbering-piping.test.mjs scripts/tests/unit/reducer-helpers.test.mjs",
     "test:rbac1": "node --test scripts/tests/integration/auth/auth-foundation.test.mjs",
     "test:rbac2": "node --test scripts/tests/integration/rbac/ownership.test.mjs",

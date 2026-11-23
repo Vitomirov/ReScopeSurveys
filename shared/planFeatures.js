@@ -54,7 +54,7 @@ export function canEnforceBrandLock(planId) {
   return isEnterprisePlan(planId)
 }
 
-/** Survey import (file, text outline, webhook) — enterprise only. */
+/** Survey import (file, text outline, Claude MCP / HTTP import) — enterprise only. */
 export function canUseSurveyImport(planId) {
   return isEnterprisePlan(planId)
 }

@@ -156,6 +156,7 @@ Dual-mode stores branch on `useApi` (`src/config/api.js`):
 | `/api/admin/*` | JWT (admin) | Employee stats |
 | `/api/public/*` | None | Live survey, response submit |
 | `/api/internal/*` | Secret token | Caddy ask, embed CSP |
+| `/api/integrations/v1/*` | Integration API key | Webhook import, Claude MCP |
 
 Route handlers: `server/src/routes/`. Business logic: `server/src/lib/`.
 

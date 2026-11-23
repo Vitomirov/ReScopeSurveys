@@ -1,8 +1,8 @@
 # Survey import guide (Enterprise)
 
-ReScope can create surveys from a **workbook**, **text outline**, or **automation webhook** (e.g. n8n + AI). Manual survey building in the dashboard is unchanged — import is an optional accelerator.
+ReScope can create surveys from a **workbook**, **text outline**, or **Claude MCP**. Manual survey building in the dashboard is unchanged — import is an optional accelerator.
 
-**Plan:** Survey import requires the **Enterprise** plan. Starter / Professional / Trial orgs do not see Import in the UI or the webhook.
+**Plan:** Survey import requires the **Enterprise** plan. Starter / Professional / Trial orgs do not see Import in the UI or MCP.
 
 **After every successful create import:** survey status is **pending** (`pending_review`). A person must open the builder, review content and logic, then set **Draft** or **Live**. Respondents only see **Live** surveys.
 
@@ -23,7 +23,7 @@ Regenerate the workbook after schema changes: `node scripts/dev/generate-survey-
 | ------------------------------------- | -------------------------------------------------------- |
 | Dashboard **Import** (file / text)    | Enterprise + builder access                              |
 | Builder **Import** (append questions) | Enterprise; survey must be **Draft** or **pending** only |
-| **Integration keys** (webhook)        | Enterprise **org admin**                                 |
+| **Integration keys** (Claude MCP)       | Enterprise **org admin**                                 |
 | Set status to Live                    | Any editor with access to the survey                     |
 
 Check import is enabled (logged in): `GET /api/surveys/import/capabilities` → `{ "surveyImport": true }`.
@@ -141,122 +141,108 @@ Canonical keys match the builder (`questionHelpers.js`). Workbook sheet **Questi
 - **Legacy JSON aliases** (normalized on import): `max_diff` → `maxdiff`, `semantic_differential` → `semantic_diff`, `bipolar` → `bipolar_matrix`, `image_choice` → `image_choice_single`
 - **Images:** no binary image import; add images in the builder after import
 
-`settings.onePerPage` in JSON/webhook can insert page breaks between questions when enabled (workbook path uses item list order as authored).
+`settings.onePerPage` in JSON import can insert page breaks between questions when enabled (workbook path uses item list order as authored).
 
 ---
 
-## 6. Integration API keys & n8n
+## 6. Integration API keys & Claude MCP
 
 ### Create a key
 
 1. **Platform settings** → **Integration keys** (Enterprise admin).
-2. **Create key** — label e.g. `n8n production`.
+2. **Create key** — label e.g. `Claude MCP`.
 3. Copy `rsk_live_…` immediately — it is **shown once**.
-4. Store in n8n credentials (HTTP Header Auth or custom header).
+4. Paste into Claude as the connector `authorization` header value: `Bearer rsk_live_…`.
 
 ### Revoke a key
 
-Integration keys → trash icon on the key. All workflows using that key receive **401**. Create a new key and update n8n.
+Integration keys → trash icon on the key. Claude (and any HTTP client) using that key receives **401**. Create a new key and update the connector header.
 
-### Webhook endpoint
+### Claude MCP
+
+Claude Web / Desktop connects to Rescope as a **remote MCP custom connector**. Claude turns a screening brief into schema v1 and calls the `create_preview_survey` tool.
+
+**Endpoint (Streamable HTTP):**
+
+```http
+POST /api/integrations/v1/mcp
+```
+
+- **Auth:**
+  - Prefer header: `Authorization: Bearer rsk_live_…`
+  - Also accepted: `X-Rescope-Api-Key: rsk_live_…`
+- **No browser session / CSRF** — API key only.
+- Enterprise gate; rate-limited per organization.
+
+**Claude setup**
+
+1. Platform settings → Integration keys → create a key (copy once).
+2. Claude → Connectors → Add custom connector.
+3. Server URL: `https://<public-host>/api/integrations/v1/mcp` (see local testing below).
+4. Authentication: **No sign-in**.
+5. Request headers: `authorization` = `Bearer rsk_live_…` (include the `Bearer ` prefix).
+6. Paste a screening brief; Claude should call `create_preview_survey` and return a `builderUrl` (`{APP_URL}/#/builder/{surveyId}`).
+
+**Tool:** `create_preview_survey` — args include `title`, `items[]` (schema v1), optional `externalId` / survey metadata. Always creates `pending_review`.
+
+### Local testing
+
+Claude’s remote connectors connect **from Anthropic’s cloud**, not from your laptop. A URL like `http://localhost:3003/...` or `http://127.0.0.1/...` will fail with “enter a public https:// URL”.
+
+| Goal | How |
+|------|-----|
+| **Real Claude ↔ local API** | Run `npm run dev:docker`, then expose the API with a **public HTTPS tunnel on port 443** (e.g. Cloudflare Tunnel or ngrok) to `127.0.0.1:3003`. Paste `https://<tunnel-host>/api/integrations/v1/mcp` into Claude. |
+| **Without Claude (API check)** | Create a key, then call MCP with curl against `http://127.0.0.1:3003` (see below), or run `npm run test:survey-import`. |
+| **Production** | Use your live app host (same origin as `/api`). |
+
+**curl MCP smoke (local, no Claude):**
+
+```bash
+# Initialize (optional) then tools/call — replace KEY
+curl -s -X POST 'http://127.0.0.1:3003/api/integrations/v1/mcp' \
+  -H 'Authorization: Bearer rsk_live_YOUR_KEY' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{
+    "jsonrpc":"2.0","id":1,"method":"tools/call",
+    "params":{
+      "name":"create_preview_survey",
+      "arguments":{
+        "title":"Local MCP smoke",
+        "externalId":"local-mcp-001",
+        "items":[{
+          "code":"Q1","itemType":"question","questionType":"single_select",
+          "text":"Pick one",
+          "options":[
+            {"code":"Q1_O1","text":"A"},
+            {"code":"Q1_O2","text":"B"}
+          ]
+        }]
+      }
+    }
+  }'
+```
+
+Optional HTTP import (same auth/create path as the MCP tool, useful for fixtures):
 
 ```http
 POST /api/integrations/v1/surveys/import
 ```
-
-- **Authentication (either):**
-  - `Authorization: Bearer rsk_live_…`
-  - `X-Rescope-Api-Key: rsk_live_…`
-- **No browser session / CSRF** — API key only.
-- **Idempotency:** header `Idempotency-Key: <unique>` and/or body field `externalId`. Repeating the same id returns **200** with the same `surveyId` (no duplicate survey).
-
-**Local dev base URL:** `http://127.0.0.1:3003` (API).  
-**Production:** your app API host (same origin as `/api` in production).
-
-### Minimal JSON body (canonical schema v1)
-
-Use **codes**, not database UUIDs. Do **not** set `status: live`.
-
-```json
-{
-  "schemaVersion": 1,
-  "externalId": "n8n-exec-12345",
-  "survey": {
-    "title": "Webhook test survey",
-    "surveyCode": "WH01"
-  },
-  "items": [
-    {
-      "code": "Q1",
-      "itemType": "question",
-      "questionType": "single_select",
-      "text": "How satisfied are you?",
-      "required": true,
-      "options": [
-        { "code": "Q1_O1", "text": "Very satisfied" },
-        { "code": "Q1_O2", "text": "Not satisfied", "terminates": true }
-      ]
-    },
-    {
-      "code": "Q2",
-      "itemType": "question",
-      "questionType": "open_text",
-      "text": "Additional comments",
-      "multiline": true
-    }
-  ]
-}
-```
-
-**Success:** `201` with `surveyId`, `revision`, `status: "pending_review"`, optional `warnings`.  
-**Validation failure:** `422` with `errors[]` (`path`, `code`, `message`).  
-**Not Enterprise:** `403` `IMPORT_NOT_INCLUDED`.  
-**Rate limit:** `429` on webhook (per organization).
-
-### curl example (local)
 
 ```bash
 curl -s -X POST 'http://127.0.0.1:3003/api/integrations/v1/surveys/import' \
   -H 'Authorization: Bearer rsk_live_YOUR_KEY' \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: my-test-001' \
-  -d @- <<'EOF'
-{
-  "schemaVersion": 1,
-  "externalId": "my-test-001",
-  "survey": { "title": "curl import test" },
-  "items": [
-    {
-      "code": "Q1",
-      "itemType": "question",
-      "questionType": "single_select",
-      "text": "Pick one",
-      "options": [
-        { "code": "Q1_O1", "text": "A" },
-        { "code": "Q1_O2", "text": "B" }
-      ]
-    }
-  ]
-}
-EOF
+  -d '{"schemaVersion":1,"externalId":"my-test-001","survey":{"title":"curl import test"},"items":[{"code":"Q1","itemType":"question","questionType":"single_select","text":"Pick one","options":[{"code":"Q1_O1","text":"A"},{"code":"Q1_O2","text":"B"}]}]}'
 ```
 
-### n8n workflow outline
-
-1. **Trigger** — manual, webhook, or schedule (for testing).
-2. **Optional: AI node** — system prompt: output **only** JSON matching schema v1; use codes `Q1`, `Q1_O1`; never set Live; include `externalId` from execution id.
-3. **HTTP Request**
-   - Method: POST
-   - URL: `{API_BASE}/api/integrations/v1/surveys/import`
-   - Auth header: Bearer + integration key
-   - Body: JSON from previous step
-   - Header: `Idempotency-Key` = `{{ $execution.id }}`
-4. **IF** status 201/200 → notify with `surveyId` and builder link `#/builder/{{surveyId}}`
-5. **IF** 422 → surface `errors` for fixing the prompt or payload
+**Success (HTTP import):** `201` with `surveyId`, `revision`, `status: "pending_review"`, optional `warnings`.  
+**Validation failure:** `422` with `errors[]`. **Not Enterprise:** `403` `IMPORT_NOT_INCLUDED`.
 
 ---
 
-## 7. Staff API (session cookie — not for n8n)
+## 7. Staff API (session cookie)
 
 Used by the ReScope UI (`VITE_USE_API=true`):
 
@@ -276,20 +262,21 @@ Used by the ReScope UI (`VITE_USE_API=true`):
 2. [ ] `GET /api/surveys/import/capabilities` → `surveyImport: true`.
 3. [ ] Download template → upload unchanged → **pending** survey with 4 questions.
 4. [ ] Text outline sample → same.
-5. [ ] Create integration key → curl or n8n → **201** → open builder.
-6. [ ] Repeat same `externalId` → **200** idempotent.
+5. [ ] Create integration key → curl MCP or HTTP import → pending survey → open builder.
+6. [ ] Repeat same `externalId` → idempotent (same `surveyId`).
 7. [ ] Revoke key → **401**; new key works.
 8. [ ] Append on **Draft** survey → items grow.
 9. [ ] Append on **Live** survey → **422** `IMPORT_STATUS_LOCKED`.
 10. [ ] Set **Live** → public preview works.
+11. [ ] Claude MCP (public HTTPS URL or tunnel) → `create_preview_survey` → open `builderUrl`.
 
 **Automated:** `npm run test:survey-import` (unit + integration; integration needs API on `PORT` from `.env`).
 
 ---
 
-## 9. AI / automation prompt hints
+## 9. AI / MCP prompt hints
 
-When generating webhook JSON:
+When Claude (or any client) builds schema v1 JSON:
 
 - `schemaVersion: 1` only.
 - One page break item between pages if `settings.onePerPage` is true (JSON).

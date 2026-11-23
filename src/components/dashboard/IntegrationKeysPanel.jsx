@@ -10,7 +10,7 @@ export function IntegrationKeysPanel() {
   const [keys, setKeys] = useState([])
   const [loading, setLoading] = useState(true)
   const [newKey, setNewKey] = useState(null)
-  const [name, setName] = useState('n8n import')
+  const [name, setName] = useState('Claude MCP')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,7 +35,7 @@ export function IntegrationKeysPanel() {
     try {
       const data = await createIntegrationKey(name)
       setNewKey(data.apiKey)
-      setName('n8n import')
+      setName('Claude MCP')
       await load()
     } catch (err) {
       setError(err.message || 'Could not create key')
@@ -49,11 +49,30 @@ export function IntegrationKeysPanel() {
     await load()
   }
 
+  const mcpUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/integrations/v1/mcp`
+    : '/api/integrations/v1/mcp'
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-ink-500">
-        API keys authenticate webhook imports. Store the key securely — it is shown only once.
+        Keys authenticate the Claude MCP connector. Store each key securely — it is shown only once.
       </p>
+
+      <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-3 text-sm space-y-2">
+        <p className="font-medium text-ink-800">Claude custom connector</p>
+        <p className="text-ink-500">
+          In Claude (Web or Desktop): Connectors → Add custom connector → Authentication{' '}
+          <span className="font-medium text-ink-700">No sign-in</span>. Add request header{' '}
+          <code className="text-xs">authorization</code> with value{' '}
+          <code className="text-xs">Bearer &lt;your key&gt;</code>.
+        </p>
+        <p className="text-ink-500">
+          MCP URL (must be a public <code className="text-xs">https://</code> host Claude can reach — not{' '}
+          <code className="text-xs">localhost</code> unless you use a tunnel):
+        </p>
+        <code className="block text-xs break-all bg-white border border-ink-100 rounded px-1.5 py-0.5">{mcpUrl}</code>
+      </div>
 
       {newKey && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">

@@ -67,7 +67,8 @@ test('append blocked on live survey', async () => {
   const unique = `imp_live_${Date.now()}`
   const { adminToken } = await provisionOrg(api, unique, { planId: 'enterprise' })
 
-  const surveyId = `s_imp_${Date.now()}`
+  // importPayloadSchema requires surveyId to be a UUID (not s_imp_… fixtures).
+  const surveyId = crypto.randomUUID()
   const create = await api(`/api/surveys/${surveyId}`, {
     method: 'PATCH',
     token: adminToken,
@@ -90,6 +91,6 @@ test('append blocked on live survey', async () => {
       items: parsed.items,
     },
   })
-  assert.equal(imp.status, 422)
+  assert.equal(imp.status, 422, JSON.stringify(imp.data))
   assert.ok(imp.data.errors?.some(e => e.code === 'IMPORT_STATUS_LOCKED'))
 })
