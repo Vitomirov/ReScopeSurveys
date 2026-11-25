@@ -7,7 +7,7 @@ import { addUser, updateUser, deleteUser } from '@/utils/data/authStore'
 import { roleLabel } from '@/utils/platform/permissions'
 import { productGrantLabel } from '@/utils/panelLink'
 import { AUTH_TEAM, AUTH_PROFILE } from '@/constants/auth/authCopy'
-import { UserAvatar } from './UserAvatar.jsx'
+import { UserAvatar } from '@/components/dashboard/shared/UserAvatar.jsx'
 
 function generatePassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$'

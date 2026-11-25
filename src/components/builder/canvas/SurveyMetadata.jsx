@@ -9,11 +9,11 @@ import { useApi } from '@/config/api'
 import { getSession, updateSession } from '@/utils/data/authStore'
 import { canManagePlatform } from '@/utils/platform/permissions'
 import { isSurveyCodeTaken } from '@/utils/data/surveyLibrary'
-import { ShareableSurveyUrl } from './managers/ShareableSurveyUrl'
+import { ShareableSurveyUrl } from '@/components/builder/managers/ShareableSurveyUrl'
 import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 import { SURVEY_DATE_FORMAT_OPTIONS } from '@/utils/format/dateSurveyFormat'
 
-const PlatformSettings = lazy(() => import('@/components/dashboard/PlatformSettings.jsx'))
+const PlatformSettings = lazy(() => import('@/components/dashboard/platform/PlatformSettings.jsx'))
 
 const CODE_RE = /^[A-Z0-9_-]{1,20}$/i
 

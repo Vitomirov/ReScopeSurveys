@@ -10,7 +10,7 @@ import {
 import { EmptyState } from '@/components/builder/panels'
 import {
   SurveyItemRow, PageOneLockBarRow, getDragOverlayLabel,
-} from '@/components/builder/SurveyItemRow'
+} from '@/components/builder/canvas/SurveyItemRow'
 
 export function SurveyItemList({
   state,

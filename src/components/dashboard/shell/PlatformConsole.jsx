@@ -28,9 +28,9 @@ import { HeaderLogoutButton } from '@/components/shared/layout/HeaderLogoutButto
 import { AppContentShell } from '@/components/shared/layout/AppContentShell.jsx'
 import { AppWorkspaceColumns } from '@/components/shared/layout/AppWorkspaceColumns.jsx'
 import { roleLabel } from '@/utils/platform/permissions'
-import { UserAvatar } from './UserAvatar.jsx'
+import { UserAvatar } from '@/components/dashboard/shared/UserAvatar.jsx'
 
-const AccountSettingsModal = lazy(() => import('./AccountSettingsModal.jsx'))
+const AccountSettingsModal = lazy(() => import('@/components/dashboard/account/AccountSettingsModal.jsx'))
 
 const PLANS = [
   { id: 'free_trial', name: 'Free Trial' },

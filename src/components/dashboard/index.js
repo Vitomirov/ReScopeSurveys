@@ -1,2 +1,2 @@
-export { Dashboard } from './Dashboard'
-export { PlatformSettings } from './PlatformSettings'
+export { Dashboard } from './shell/Dashboard'
+export { PlatformSettings } from './platform/PlatformSettings'

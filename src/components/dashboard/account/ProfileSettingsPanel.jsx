@@ -5,8 +5,8 @@ import { updateProfile as updateProfileApi } from '@/api/auth/profile'
 import { updateProfileLocal } from '@/utils/data/authStore'
 import { AUTH_PROFILE, AUTH_VALIDATION } from '@/constants/auth/authCopy'
 import { useToast } from '@/components/ui'
-import { UserAvatar } from './UserAvatar.jsx'
-import { TotpSettings } from './TotpSettings.jsx'
+import { UserAvatar } from '@/components/dashboard/shared/UserAvatar.jsx'
+import { TotpSettings } from '@/components/dashboard/account/TotpSettings.jsx'
 
 const MAX_AVATAR_BYTES = 512 * 1024
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']

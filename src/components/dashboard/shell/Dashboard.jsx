@@ -31,16 +31,16 @@ import {
   canManagePlatform, canSeeAllSurveys, filterSurveysForSession,
 } from '@/utils/platform/permissions'
 import { useResponseNotifications } from '@/hooks/useResponseNotifications'
-import { EmailVerificationBanner } from './EmailVerificationBanner.jsx'
-import { ImportSurveyModal } from './ImportSurveyModal.jsx'
+import { EmailVerificationBanner } from '@/components/dashboard/shell/EmailVerificationBanner.jsx'
+import { ImportSurveyModal } from '@/components/dashboard/shell/ImportSurveyModal.jsx'
 import { fetchImportCapabilities } from '@/api/survey/import'
 import { Upload } from 'lucide-react'
 
-const PlatformSettings = lazy(() => import('./PlatformSettings.jsx'))
-const TeamPanel        = lazy(() => import('./TeamPanel.jsx'))
-const TeamMembersModal = lazy(() => import('./TeamMembersModal.jsx'))
-const DashboardHeader  = lazy(() => import('./DashboardHeader.jsx'))
-const AccountSettingsModal = lazy(() => import('./AccountSettingsModal.jsx'))
+const PlatformSettings = lazy(() => import('@/components/dashboard/platform/PlatformSettings.jsx'))
+const TeamPanel        = lazy(() => import('@/components/dashboard/team/TeamPanel.jsx'))
+const TeamMembersModal = lazy(() => import('@/components/dashboard/team/TeamMembersModal.jsx'))
+const DashboardHeader  = lazy(() => import('@/components/dashboard/shell/DashboardHeader.jsx'))
+const AccountSettingsModal = lazy(() => import('@/components/dashboard/account/AccountSettingsModal.jsx'))
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 function fmtDate(iso) {

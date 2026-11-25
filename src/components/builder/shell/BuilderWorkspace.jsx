@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { BuilderQuickAddDock } from '@/components/builder/panels'
-import { SurveyHeaderCard } from '@/components/builder/SurveyHeaderCard'
-import { SurveyItemList } from '@/components/builder/SurveyItemList'
-import { BuilderSidebar } from '@/components/builder/BuilderSidebar'
+import { SurveyHeaderCard } from '@/components/builder/canvas/SurveyHeaderCard'
+import { SurveyItemList } from '@/components/builder/canvas/SurveyItemList'
+import { BuilderSidebar } from '@/components/builder/shell/BuilderSidebar'
 import { AppWorkspaceColumns } from '@/components/shared/layout/AppWorkspaceColumns.jsx'
 
 export function BuilderWorkspace({

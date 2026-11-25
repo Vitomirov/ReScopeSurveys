@@ -25,9 +25,9 @@ import { isPlatformOwner } from '@/utils/platform/permissions'
 const LoginPage        = lazy(() => import('@/components/auth/pages/LoginPage.jsx'))
 const AccountLinkPage  = lazy(() => import('@/components/auth/pages/AccountLinkPage.jsx'))
 const MarketingPage    = lazy(() => import('@/website/MarketingPage.jsx'))
-const Dashboard        = lazy(() => import('@/components/dashboard/Dashboard.jsx'))
-const PlatformConsole  = lazy(() => import('@/components/dashboard/PlatformConsole.jsx'))
-const SurveyBuilder    = lazy(() => import('@/components/builder/SurveyBuilder.jsx'))
+const Dashboard        = lazy(() => import('@/components/dashboard/shell/Dashboard.jsx'))
+const PlatformConsole  = lazy(() => import('@/components/dashboard/shell/PlatformConsole.jsx'))
+const SurveyBuilder    = lazy(() => import('@/components/builder/shell/SurveyBuilder.jsx'))
 const SurveyPreview    = lazy(() => import('@/components/taker/SurveyPreview.jsx'))
 
 /** Load the survey named by the route — public payload for the taker link. */

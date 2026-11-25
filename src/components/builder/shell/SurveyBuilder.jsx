@@ -1,16 +1,16 @@
 import { lazy, Suspense, useState, useEffect, useMemo } from 'react'
 import { PageLoader } from '@/components/ui'
 import { useSurveyBuilder } from '@/components/builder/hooks/useSurveyBuilder'
-import { BuilderHeader } from '@/components/builder/BuilderHeader'
-import { BuilderWorkspace } from '@/components/builder/BuilderWorkspace'
-import { BuilderMobileChrome } from '@/components/builder/BuilderMobileChrome'
-import { BuilderModals } from '@/components/builder/BuilderModals'
-import { ImportQuestionsModal } from '@/components/builder/ImportQuestionsModal'
+import { BuilderHeader } from '@/components/builder/shell/BuilderHeader'
+import { BuilderWorkspace } from '@/components/builder/shell/BuilderWorkspace'
+import { BuilderMobileChrome } from '@/components/builder/shell/BuilderMobileChrome'
+import { BuilderModals } from '@/components/builder/shell/BuilderModals'
+import { ImportQuestionsModal } from '@/components/builder/import/ImportQuestionsModal'
 import { fetchImportCapabilities } from '@/api/survey/import'
 import { useApi } from '@/config/api'
 import { getSurvey } from '@/api/survey/surveys'
 import { AppAlignedBody } from '@/components/shared/layout/AppBuilderShell.jsx'
-import { ImportReviewBanner } from '@/components/builder/ImportReviewBanner.jsx'
+import { ImportReviewBanner } from '@/components/builder/import/ImportReviewBanner.jsx'
 
 const SurveyPreview = lazy(() => import('@/components/taker/SurveyPreview.jsx'))
 

@@ -1,6 +1,6 @@
 export { ShareableSurveyUrl } from './managers/ShareableSurveyUrl'
-export { SurveyBuilder } from './SurveyBuilder'
-export { SurveyMetadata } from './SurveyMetadata'
+export { SurveyBuilder } from './shell/SurveyBuilder'
+export { SurveyMetadata } from './canvas/SurveyMetadata'
 export { CoverPageSettings } from './settings/CoverPageSettings'
 export { ProgressBarSettings } from './settings/ProgressBarSettings'
 export { BackButtonSettings } from './settings/BackButtonSettings'

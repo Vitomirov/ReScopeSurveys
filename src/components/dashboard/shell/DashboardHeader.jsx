@@ -16,8 +16,8 @@ import { AUTH_PROFILE, AUTH_TEAM } from '@/constants/auth/authCopy'
 import { roleLabel, canManagePlatform } from '@/utils/platform/permissions'
 import { panelStartUrl } from '@/utils/panelLink'
 import { prefetchBuilder } from '@/utils/routing/routePrefetch'
-import { UserAvatar } from './UserAvatar.jsx'
-import { NotificationBell } from './NotificationBell.jsx'
+import { UserAvatar } from '@/components/dashboard/shared/UserAvatar.jsx'
+import { NotificationBell } from '@/components/dashboard/notifications/NotificationBell.jsx'
 
 function UserMenu({
   session,

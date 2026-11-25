@@ -24,11 +24,11 @@ export function prefetchForRoute({ session, publicSurveyId } = {}) {
   }
   if (sess) {
     if (isPlatformOwner(sess)) {
-      prefetchModule(() => import('@/components/dashboard/PlatformConsole.jsx'))
+      prefetchModule(() => import('@/components/dashboard/shell/PlatformConsole.jsx'))
       return
     }
-    prefetchModule(() => import('@/components/dashboard/Dashboard.jsx'))
-    prefetchModule(() => import('@/components/builder/SurveyBuilder.jsx'))
+    prefetchModule(() => import('@/components/dashboard/shell/Dashboard.jsx'))
+    prefetchModule(() => import('@/components/builder/shell/SurveyBuilder.jsx'))
     prefetchCommonEditors()
     return
   }
@@ -37,13 +37,13 @@ export function prefetchForRoute({ session, publicSurveyId } = {}) {
 }
 
 export const prefetchDashboard = () =>
-  prefetchModule(() => import('@/components/dashboard/Dashboard.jsx'))
+  prefetchModule(() => import('@/components/dashboard/shell/Dashboard.jsx'))
 
 export const prefetchPlatformConsole = () =>
-  prefetchModule(() => import('@/components/dashboard/PlatformConsole.jsx'))
+  prefetchModule(() => import('@/components/dashboard/shell/PlatformConsole.jsx'))
 
 export const prefetchBuilder = () =>
-  prefetchModule(() => import('@/components/builder/SurveyBuilder.jsx'))
+  prefetchModule(() => import('@/components/builder/shell/SurveyBuilder.jsx'))
 
 export const prefetchPreview = () =>
   prefetchModule(() => import('@/components/taker/SurveyPreview.jsx'))
