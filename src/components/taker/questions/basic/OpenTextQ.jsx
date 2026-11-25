@@ -1,5 +1,5 @@
-import { OPEN_TEXT_PLACEHOLDER } from '@/constants/placeholders'
-import { TAKER_INPUT_CLASS, TAKER_INPUT_RESIZE_NONE_CLASS } from '@/constants/classNames'
+import { OPEN_TEXT_PLACEHOLDER } from '@/constants/survey/placeholders'
+import { TAKER_INPUT_CLASS, TAKER_INPUT_RESIZE_NONE_CLASS } from '@/constants/ui/classNames'
 
 export function OpenTextQ({ question, value = '', onChange }) {
   const cfg = question.openTextConfig

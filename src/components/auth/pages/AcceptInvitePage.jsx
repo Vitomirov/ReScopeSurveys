@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { acceptInvite, previewInvite } from '@/api/auth/account'
 import { updateSession } from '@/utils/data/authStore'
-import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/authCopy'
+import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/auth/authCopy'
 import { InlineLoader } from '@/components/ui'
-import { AccountPageShell, Field, FormNotice, PasswordField, SubmitButton } from './AuthFormParts.jsx'
+import { AccountPageShell, Field, FormNotice, PasswordField, SubmitButton } from '@/components/auth/shared/AuthFormParts.jsx'
 
 export function AcceptInvitePage({ token, onLogin, onGoHome }) {
   const [invite, setInvite] = useState(null)

@@ -1,5 +1,5 @@
 import { AuthBrandAside, AuthBrandCompact } from './AuthBrandAside.jsx'
-import { AUTH_LOGIN_WELCOME } from '@/constants/authCopy'
+import { AUTH_LOGIN_WELCOME } from '@/constants/auth/authCopy'
 
 const copy = AUTH_LOGIN_WELCOME
 

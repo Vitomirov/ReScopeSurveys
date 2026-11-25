@@ -3,7 +3,7 @@ import { Palette, RotateCcw } from 'lucide-react'
 import { useApi } from '@/config/api'
 import { fetchBrandKit, patchBrandKit } from '@/api/platform/billing'
 import { InlineLoader, useToast } from '@/components/ui'
-import { cloneDefaultBrandTheme } from '@/constants/branding'
+import { cloneDefaultBrandTheme } from '@/constants/ui/branding'
 import {
   APPROVED_FONTS,
   BORDER_RADIUS_OPTIONS,

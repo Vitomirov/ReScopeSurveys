@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
-import { TAKER_INPUT_CLASS } from '@/constants/classNames'
+import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
+import { TAKER_INPUT_CLASS } from '@/constants/ui/classNames'
 import {
   DATE_DIGIT_COUNT,
   digitsFromISO,

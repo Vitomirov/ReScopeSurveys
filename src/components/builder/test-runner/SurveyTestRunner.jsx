@@ -3,7 +3,7 @@ import {
   X, Play, PlayCircle, CheckCircle2, XCircle,
   GitBranch, List, Loader2,
 } from 'lucide-react'
-import { DEFAULT_SURVEY_TITLE } from '@/constants/surveyDefaults'
+import { DEFAULT_SURVEY_TITLE } from '@/constants/survey/surveyDefaults'
 import { analyzeBranches } from './branchAnalysis'
 import { runSimulation } from './simulationEngine'
 import { BranchIcon, LogEntry, AllResultsTable } from './TestRunnerUI'

@@ -3,7 +3,7 @@ import {
   PageBreakItem, PageOneLockBar, GroupItem, TerminationBlockItem, TextBlockItem,
 } from '@/components/builder/items'
 import { PAGE_ONE_LOCK_ID } from '@/components/builder/items/PageOneLockBar'
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 
 export function SurveyItemRow({
   item,

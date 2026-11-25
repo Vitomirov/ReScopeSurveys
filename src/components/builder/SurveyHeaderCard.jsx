@@ -5,7 +5,7 @@ import {
   CoverPageSettings, BrandingSettings, ProgressBarSettings, BackButtonSettings,
   FingerprintSettings, DNCManager, SurveyMetadata,
 } from '@/components/builder'
-import { DEFAULT_SCREEN_MESSAGES } from '@/constants/surveyDefaults'
+import { DEFAULT_SCREEN_MESSAGES } from '@/constants/survey/surveyDefaults'
 
 export function SurveyHeaderCard({ survey, dispatch, hasItems = false }) {
   const prevHasItemsRef = useRef(hasItems)

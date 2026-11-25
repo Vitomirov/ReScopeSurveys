@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { AUTH_BILLING } from '@/constants/authCopy'
+import { AUTH_BILLING } from '@/constants/auth/authCopy'
 import { formatMoney } from '@/utils/format/format'
 
 function formatPlanPrice(priceCents, currency = 'USD') {

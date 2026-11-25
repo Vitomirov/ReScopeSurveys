@@ -3,7 +3,7 @@ import {
   DEFAULT_SCREEN_MESSAGES,
   DEFAULT_START_BUTTON_TEXT,
   DEFAULT_SURVEY_TITLE,
-} from '@/constants/surveyDefaults'
+} from '@/constants/survey/surveyDefaults'
 import { newId } from './id'
 
 export const INITIAL_STATE = {

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { resetPassword } from '@/api/auth/account'
 import { updateSession } from '@/utils/data/authStore'
 import { nav } from '@/utils/routing/appRoute'
-import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/authCopy'
-import { AccountPageShell, FormNotice, PasswordField, SubmitButton } from './AuthFormParts.jsx'
+import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/auth/authCopy'
+import { AccountPageShell, FormNotice, PasswordField, SubmitButton } from '@/components/auth/shared/AuthFormParts.jsx'
 
 export function ResetPasswordPage({ token, onLogin, onGoHome }) {
   const [password, setPassword] = useState('')

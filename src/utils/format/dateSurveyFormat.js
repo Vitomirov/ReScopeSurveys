@@ -1,4 +1,4 @@
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 import { parseISODate } from '@/utils/survey/conditions/dateOperators'
 
 export const SURVEY_DATE_FORMAT_OPTIONS = [

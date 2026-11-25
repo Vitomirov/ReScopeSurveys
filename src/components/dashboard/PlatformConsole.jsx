@@ -4,7 +4,7 @@ import {
   Users, CheckCircle2, AlertTriangle, Clock, ChevronRight,
 } from 'lucide-react'
 import { useApi } from '@/config/api'
-import { AUTH_BILLING, AUTH_ERRORS, AUTH_PROFILE } from '@/constants/authCopy'
+import { AUTH_BILLING, AUTH_ERRORS, AUTH_PROFILE } from '@/constants/auth/authCopy'
 import {
   fetchVendorOrganizations,
   fetchVendorOrganization,

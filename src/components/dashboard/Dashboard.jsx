@@ -9,8 +9,8 @@ import {
   loadLibrary, deleteSurvey, duplicateSurvey, buildClonedSurvey,
 } from '@/utils/data/surveyLibrary'
 import { useApi } from '@/config/api'
-import { AUTH_ERRORS } from '@/constants/authCopy'
-import { DEFAULT_SURVEY_TITLE } from '@/constants/surveyDefaults'
+import { AUTH_ERRORS } from '@/constants/auth/authCopy'
+import { DEFAULT_SURVEY_TITLE } from '@/constants/survey/surveyDefaults'
 import {
   getSurvey, deleteSurveyApi, migrateLocalLibrary,
   metaToLibraryEntry, patchSurvey,

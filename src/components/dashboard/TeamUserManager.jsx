@@ -6,7 +6,7 @@ import { createInvite, fetchInvites, resendInvite, revokeInvite } from '@/api/pl
 import { addUser, updateUser, deleteUser } from '@/utils/data/authStore'
 import { roleLabel } from '@/utils/platform/permissions'
 import { productGrantLabel } from '@/utils/panelLink'
-import { AUTH_TEAM, AUTH_PROFILE } from '@/constants/authCopy'
+import { AUTH_TEAM, AUTH_PROFILE } from '@/constants/auth/authCopy'
 import { UserAvatar } from './UserAvatar.jsx'
 
 function generatePassword() {

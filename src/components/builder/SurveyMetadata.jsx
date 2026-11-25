@@ -10,7 +10,7 @@ import { getSession, updateSession } from '@/utils/data/authStore'
 import { canManagePlatform } from '@/utils/platform/permissions'
 import { isSurveyCodeTaken } from '@/utils/data/surveyLibrary'
 import { ShareableSurveyUrl } from './managers/ShareableSurveyUrl'
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 import { SURVEY_DATE_FORMAT_OPTIONS } from '@/utils/format/dateSurveyFormat'
 
 const PlatformSettings = lazy(() => import('@/components/dashboard/PlatformSettings.jsx'))

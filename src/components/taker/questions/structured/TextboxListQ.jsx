@@ -1,4 +1,4 @@
-import { OPEN_TEXT_PLACEHOLDER } from '@/constants/placeholders'
+import { OPEN_TEXT_PLACEHOLDER } from '@/constants/survey/placeholders'
 
 export function TextboxListQ({ question, value = {}, onChange }) {
   const cfg = question.textboxListConfig

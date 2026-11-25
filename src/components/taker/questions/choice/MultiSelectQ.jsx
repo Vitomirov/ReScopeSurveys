@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
+import { SPECIFY_PLACEHOLDER } from '@/constants/survey/placeholders'
 import { useOrderedChoiceOptions } from '@/hooks/useOrderedChoiceOptions'
 
 export function MultiSelectQ({ question, value = [], onChange, companions = {}, onCompanionChange }) {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { MailWarning } from 'lucide-react'
 import { useApi } from '@/config/api'
 import { resendVerificationEmail } from '@/api/auth/account'
-import { AUTH_ACCOUNT } from '@/constants/authCopy'
+import { AUTH_ACCOUNT } from '@/constants/auth/authCopy'
 
 /** Shown until a self-signup admin confirms the address that owns the account. */
 export function EmailVerificationBanner({ session }) {

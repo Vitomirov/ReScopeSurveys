@@ -11,7 +11,7 @@ import { VisibilityEditor } from '@/components/shared'
 import { makeToken } from '@/utils/survey/questions/piping'
 import { getTypeMeta, TYPE_COLORS, TYPE_ICONS, isChoiceType, isMatrixType, QUESTION_TYPES } from '@/utils/survey/questions/questionHelpers'
 import { makeOption } from '@/store/surveyStore'
-import { DEFAULT_DATE_FORMAT } from '@/constants/surveyDefaults'
+import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 import { resolveDateFormat } from '@/utils/format/dateSurveyFormat'
 
 // ─── Token Picker — insert piping reference into question text ─────────────

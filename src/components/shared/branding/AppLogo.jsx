@@ -1,6 +1,6 @@
 import logoLgUrl from '@/assets/brand/logo-lg.svg'
 import logoSmUrl from '@/assets/brand/logo-sm.svg'
-import { APP_NAME } from '@/constants/branding'
+import { APP_NAME } from '@/constants/ui/branding'
 
 const HEIGHT = {
   sm: 'h-7',

@@ -12,7 +12,7 @@ import {
 import { AppBackSlot } from '@/components/shared/layout/AppLeadingZone.jsx'
 import { AppLogo } from '@/components/shared/branding/AppLogo.jsx'
 import { HeaderLogoutButton } from '@/components/shared/layout/HeaderLogoutButton.jsx'
-import { AUTH_PROFILE, AUTH_TEAM } from '@/constants/authCopy'
+import { AUTH_PROFILE, AUTH_TEAM } from '@/constants/auth/authCopy'
 import { roleLabel, canManagePlatform } from '@/utils/platform/permissions'
 import { panelStartUrl } from '@/utils/panelLink'
 import { prefetchBuilder } from '@/utils/routing/routePrefetch'

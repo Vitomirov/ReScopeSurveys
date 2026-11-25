@@ -1,4 +1,4 @@
-import { APP_SHELL_MAX_WIDTH } from '@/constants/layout'
+import { APP_SHELL_MAX_WIDTH } from '@/constants/ui/layout'
 import { AppBackSlot } from '@/components/shared/layout/AppLeadingZone.jsx'
 
 export const APP_SHELL_PADDING = 'px-4 sm:px-6 lg:px-8'

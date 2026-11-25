@@ -33,7 +33,7 @@ export function prefetchForRoute({ session, publicSurveyId } = {}) {
     return
   }
   prefetchModule(() => import('@/website/MarketingPage.jsx'))
-  prefetchModule(() => import('@/components/auth/LoginPage.jsx'))
+  prefetchModule(() => import('@/components/auth/pages/LoginPage.jsx'))
 }
 
 export const prefetchDashboard = () =>

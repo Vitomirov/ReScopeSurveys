@@ -1,6 +1,6 @@
 import { useApi } from '@/config/api'
 import { notifyAuthInvalidated } from '@/api/auth/authEvents'
-import { AUTH_ERRORS } from '@/constants/authCopy'
+import { AUTH_ERRORS } from '@/constants/auth/authCopy'
 import { parseRetryAfterSeconds } from '@/utils/data/pendingResponse'
 
 export class ApiError extends Error {

@@ -3,7 +3,7 @@ import { useApi } from '@/config/api'
 import { AppShell, APP_SHELL_GRID, APP_BUILDER_PANE } from '@/components/shared/layout/AppBuilderShell.jsx'
 import { AppBackSlot } from '@/components/shared/layout/AppLeadingZone.jsx'
 import { AppLogo } from '@/components/shared/branding/AppLogo.jsx'
-import { DEFAULT_SURVEY_TITLE } from '@/constants/surveyDefaults'
+import { DEFAULT_SURVEY_TITLE } from '@/constants/survey/surveyDefaults'
 import { SURVEY_STATUSES } from '@/utils/data/platformStore'
 import { prefetchPreview } from '@/utils/routing/routePrefetch'
 import {

@@ -1,6 +1,6 @@
 import { isChoiceType } from '@/utils/survey/questions/questionHelpers'
-import { OPEN_TEXT_PLACEHOLDER, SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
-import { makeNavigationLock } from '@/constants/navigationLock'
+import { OPEN_TEXT_PLACEHOLDER, SPECIFY_PLACEHOLDER } from '@/constants/survey/placeholders'
+import { makeNavigationLock } from '@/constants/survey/navigationLock'
 import { createQuestionConfigBundle } from '@shared/survey/questionConfigDefaults.js'
 import { newId } from './id'
 

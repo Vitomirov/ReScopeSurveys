@@ -4,7 +4,7 @@
 
 import { useApi } from '@/config/api'
 import { apiFetch } from '@/api/client'
-import { AUTH_ERRORS } from '@/constants/authCopy'
+import { AUTH_ERRORS } from '@/constants/auth/authCopy'
 import { newPrefixedId } from '@/store/id'
 
 const USERS_KEY   = 'sf_users'

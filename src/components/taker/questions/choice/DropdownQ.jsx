@@ -1,4 +1,4 @@
-import { TAKER_INPUT_CLASS } from '@/constants/classNames'
+import { TAKER_INPUT_CLASS } from '@/constants/ui/classNames'
 import { useOrderedChoiceOptions } from '@/hooks/useOrderedChoiceOptions'
 
 export function DropdownQ({ question, value, onChange }) {

@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Image as ImageIcon, X, Upload } from 'lucide-react'
 import { Toggle } from '@/components/ui'
-import { DEFAULT_SCREEN_MESSAGES, DEFAULT_START_BUTTON_TEXT } from '@/constants/surveyDefaults'
+import { DEFAULT_SCREEN_MESSAGES, DEFAULT_START_BUTTON_TEXT } from '@/constants/survey/surveyDefaults'
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024 // 4MB sanity cap for base64 storage
 

@@ -1,6 +1,6 @@
 import { UserX, Zap } from 'lucide-react'
 
-import { DEFAULT_SCREEN_MESSAGES } from '@/constants/surveyDefaults'
+import { DEFAULT_SCREEN_MESSAGES } from '@/constants/survey/surveyDefaults'
 
 export function TerminationScreen({ settings, terminatedBy, isPublic = false }) {
   const title   = settings?.terminateTitle   || DEFAULT_SCREEN_MESSAGES.terminateTitle

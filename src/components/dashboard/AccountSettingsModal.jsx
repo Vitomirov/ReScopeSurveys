@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, User } from 'lucide-react'
 import { useApi } from '@/config/api'
 import { fetchMe } from '@/api/auth/profile'
-import { AUTH_PROFILE } from '@/constants/authCopy'
+import { AUTH_PROFILE } from '@/constants/auth/authCopy'
 import { InlineLoader } from '@/components/ui'
 import { ProfileSettingsPanel } from './ProfileSettingsPanel.jsx'
 

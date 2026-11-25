@@ -1,5 +1,5 @@
 import { LogOut } from 'lucide-react'
-import { AUTH_COPY } from '@/constants/authCopy'
+import { AUTH_COPY } from '@/constants/auth/authCopy'
 
 export function HeaderLogoutButton({ onLogout, className = '' }) {
   if (!onLogout) return null

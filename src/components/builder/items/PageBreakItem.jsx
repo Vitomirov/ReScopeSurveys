@@ -3,7 +3,7 @@ import { Trash2, GripVertical, FileText, ChevronDown, Clock } from 'lucide-react
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { NavigationLockEditor } from '@/components/shared'
-import { resolveNavigationLockSeconds } from '@/constants/navigationLock'
+import { resolveNavigationLockSeconds } from '@/constants/survey/navigationLock'
 
 export const PageBreakItem = memo(function PageBreakItem({
   item, pageNumber, dispatch, isActive, onActivateItem, allPagesLockEnabled = false,

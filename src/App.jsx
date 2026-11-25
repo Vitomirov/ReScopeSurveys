@@ -5,7 +5,7 @@ import { INITIAL_STATE } from '@/store/initialState'
 import { newSurveyId } from '@/store/id'
 import { getSession, logout, refreshSessionFromApi } from '@/utils/data/authStore'
 import { onAuthInvalidated } from '@/api/auth/authEvents'
-import { AUTH_ERRORS } from '@/constants/authCopy'
+import { AUTH_ERRORS } from '@/constants/auth/authCopy'
 import { useApi } from '@/config/api'
 import { prefetchForRoute } from '@/utils/routing/routePrefetch'
 import { useRoute, nav, navMarketingHome, isMarketingRoute, isAccountLinkView } from '@/utils/routing/appRoute'
@@ -16,14 +16,14 @@ import {
   SURVEY_LOAD_ERROR,
   SURVEY_NOT_FOUND_MESSAGE,
   SURVEY_NOT_FOUND_TITLE,
-} from '@/constants/errors'
+} from '@/constants/survey/errors'
 import { isRetryableStatus, retryDelayMs } from '@/utils/data/pendingResponse'
 
 import { useSurveyBranding } from '@/hooks/useSurveyBranding'
 import { isPlatformOwner } from '@/utils/platform/permissions'
 
-const LoginPage        = lazy(() => import('@/components/auth/LoginPage.jsx'))
-const AccountLinkPage  = lazy(() => import('@/components/auth/AccountLinkPage.jsx'))
+const LoginPage        = lazy(() => import('@/components/auth/pages/LoginPage.jsx'))
+const AccountLinkPage  = lazy(() => import('@/components/auth/pages/AccountLinkPage.jsx'))
 const MarketingPage    = lazy(() => import('@/website/MarketingPage.jsx'))
 const Dashboard        = lazy(() => import('@/components/dashboard/Dashboard.jsx'))
 const PlatformConsole  = lazy(() => import('@/components/dashboard/PlatformConsole.jsx'))

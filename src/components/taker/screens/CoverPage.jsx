@@ -1,4 +1,4 @@
-import { DEFAULT_START_BUTTON_TEXT, DEFAULT_SURVEY_TITLE } from '@/constants/surveyDefaults'
+import { DEFAULT_START_BUTTON_TEXT, DEFAULT_SURVEY_TITLE } from '@/constants/survey/surveyDefaults'
 import { sanitizeHtml } from '@/utils/sanitizeHtml'
 
 export function CoverPage({ survey, onStart, isPublic = false }) {

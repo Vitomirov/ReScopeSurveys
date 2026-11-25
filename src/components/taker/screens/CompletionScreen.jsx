@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { DEFAULT_SCREEN_MESSAGES } from '@/constants/surveyDefaults'
+import { DEFAULT_SCREEN_MESSAGES } from '@/constants/survey/surveyDefaults'
 
 export function CompletionScreen({ settings }) {
   const title = settings?.completeTitle || DEFAULT_SCREEN_MESSAGES.completeTitle

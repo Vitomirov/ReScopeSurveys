@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
-import { SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
+import { SPECIFY_PLACEHOLDER } from '@/constants/survey/placeholders'
 
 export function ImageChoiceQ({ question, value, onChange }) {
   const cfg     = question.imageChoiceConfig

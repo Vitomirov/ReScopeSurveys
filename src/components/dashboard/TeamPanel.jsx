@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Users, ChevronLeft, Clock } from 'lucide-react'
 import { useApi } from '@/config/api'
-import { AUTH_TEAM, AUTH_ERRORS } from '@/constants/authCopy'
+import { AUTH_TEAM, AUTH_ERRORS } from '@/constants/auth/authCopy'
 import { fetchEmployees, fetchEmployeeDetail } from '@/api/platform/admin'
 import { roleLabel } from '@/utils/platform/permissions'
 import { SURVEY_STATUSES } from '@/utils/data/platformStore'

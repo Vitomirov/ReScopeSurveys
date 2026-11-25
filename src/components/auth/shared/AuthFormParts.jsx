@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { AuthSplitLayout } from '@/components/auth/AuthSplitLayout.jsx'
-import { LoginWelcomePanelAside, LoginWelcomePanelCompact } from '@/components/auth/LoginWelcomePanel.jsx'
-import { AUTH_ACCOUNT, AUTH_COPY } from '@/constants/authCopy'
+import { AuthSplitLayout } from '@/components/auth/layout/AuthSplitLayout.jsx'
+import { LoginWelcomePanelAside, LoginWelcomePanelCompact } from '@/components/auth/layout/LoginWelcomePanel.jsx'
+import { AUTH_ACCOUNT, AUTH_COPY } from '@/constants/auth/authCopy'
 import { nav } from '@/utils/routing/appRoute'
 
 /** Sign-in styled page shell used by every account-link screen. */

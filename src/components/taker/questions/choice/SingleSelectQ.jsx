@@ -1,4 +1,4 @@
-import { SPECIFY_PLACEHOLDER } from '@/constants/placeholders'
+import { SPECIFY_PLACEHOLDER } from '@/constants/survey/placeholders'
 import { useOrderedChoiceOptions } from '@/hooks/useOrderedChoiceOptions'
 
 export function SingleSelectQ({ question, value, onChange, companions = {}, onCompanionChange }) {

@@ -8,7 +8,7 @@ import {
   formatConditionPhraseBlockStyle,
   joinConditionPhrasesInline,
 } from '../conditions/conditionSummary.js'
-import { resolveNavigationLockSeconds } from '../../../constants/navigationLock.js'
+import { resolveNavigationLockSeconds } from '../../../constants/survey/navigationLock.js'
 
 /**
  * Termination blocks evaluate when the respondent leaves the page that holds

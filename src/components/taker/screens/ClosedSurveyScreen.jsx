@@ -1,4 +1,4 @@
-import { DEFAULT_SCREEN_MESSAGES } from '@/constants/surveyDefaults'
+import { DEFAULT_SCREEN_MESSAGES } from '@/constants/survey/surveyDefaults'
 
 export function ClosedSurveyScreen({ settings }) {
   const title   = settings?.closedTitle   || DEFAULT_SCREEN_MESSAGES.closedTitle

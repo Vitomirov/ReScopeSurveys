@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CreditCard } from 'lucide-react'
 import { useApi } from '@/config/api'
-import { AUTH_BILLING, AUTH_ERRORS } from '@/constants/authCopy'
+import { AUTH_BILLING, AUTH_ERRORS } from '@/constants/auth/authCopy'
 import {
   fetchBillingOverview,
   fetchBillingPlans,

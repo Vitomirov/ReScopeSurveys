@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { TAKER_INPUT_CLASS } from '@/constants/classNames'
+import { TAKER_INPUT_CLASS } from '@/constants/ui/classNames'
 import { getSortedPhoneCountries, nextCountryByLetter } from '@/utils/format/phoneSurveyFormat'
 
 const DEFAULT_COUNTRY = 'GB'

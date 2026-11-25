@@ -15,9 +15,9 @@ function exchangeVerificationToken(token) {
 }
 import { refreshSessionFromApi } from '@/utils/data/authStore'
 import { nav } from '@/utils/routing/appRoute'
-import { AUTH_ACCOUNT } from '@/constants/authCopy'
+import { AUTH_ACCOUNT } from '@/constants/auth/authCopy'
 import { InlineLoader } from '@/components/ui'
-import { AccountPageShell, FormNotice, SignInButton } from './AuthFormParts.jsx'
+import { AccountPageShell, FormNotice, SignInButton } from '@/components/auth/shared/AuthFormParts.jsx'
 
 /** Works signed in or out: the token alone proves mailbox ownership. */
 export function VerifyEmailPage({ token, session, onSessionUpdate, onGoHome }) {

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { FileText, ChevronDown, Clock } from 'lucide-react'
 import { NavigationLockEditor } from '@/components/shared'
-import { resolveNavigationLockSeconds } from '@/constants/navigationLock'
+import { resolveNavigationLockSeconds } from '@/constants/survey/navigationLock'
 
 export const PAGE_ONE_LOCK_ID = '__page_one_lock__'
 

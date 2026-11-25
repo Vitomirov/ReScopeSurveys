@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { SectionLabel } from '@/components/ui'
 import { EditableListRow } from '@/components/shared'
 import { makeTextboxRow } from '@/store/surveyStore'
-import { OPEN_TEXT_PLACEHOLDER } from '@/constants/placeholders'
+import { OPEN_TEXT_PLACEHOLDER } from '@/constants/survey/placeholders'
 
 export function TextboxListEditor({ question, dispatch }) {
   const cfg = question.textboxListConfig

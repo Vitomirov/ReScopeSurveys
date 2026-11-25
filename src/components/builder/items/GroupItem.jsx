@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { VisibilityEditor, NavigationLockEditor } from '@/components/shared'
 import { visibilitySummary } from '@/utils/survey/engines/visibilityEngine'
-import { resolveNavigationLockSeconds } from '@/constants/navigationLock'
+import { resolveNavigationLockSeconds } from '@/constants/survey/navigationLock'
 
 export const GroupItem = memo(function GroupItem({
   item, questionCount, dispatch, isActive, onActivateItem, availableQuestions = [], contextItems = [],

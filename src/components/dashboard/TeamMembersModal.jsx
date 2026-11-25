@@ -4,7 +4,7 @@ import { useApi } from '@/config/api'
 import { getUsers } from '@/utils/data/authStore'
 import { fetchUsers } from '@/api/platform/platform'
 import { fetchBillingOverview } from '@/api/platform/billing'
-import { AUTH_PROFILE } from '@/constants/authCopy'
+import { AUTH_PROFILE } from '@/constants/auth/authCopy'
 import { InlineLoader } from '@/components/ui'
 
 const TeamUserManager = lazy(() =>

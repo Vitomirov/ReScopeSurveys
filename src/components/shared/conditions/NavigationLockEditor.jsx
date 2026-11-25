@@ -3,7 +3,7 @@ import { Toggle } from '@/components/ui'
 import {
   NAVIGATION_LOCK_DURATION_OPTIONS,
   DEFAULT_NAVIGATION_LOCK_SECONDS,
-} from '@/constants/navigationLock'
+} from '@/constants/survey/navigationLock'
 
 export function NavigationLockEditor({ lock, onChange, pageLabel, compact = false, allPages = false }) {
   const enabled = lock?.enabled || false

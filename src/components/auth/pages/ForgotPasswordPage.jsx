@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { forgotPassword } from '@/api/auth/account'
-import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/authCopy'
-import { AccountPageShell, Field, FormNotice, SubmitButton } from './AuthFormParts.jsx'
+import { AUTH_ACCOUNT, AUTH_VALIDATION } from '@/constants/auth/authCopy'
+import { AccountPageShell, Field, FormNotice, SubmitButton } from '@/components/auth/shared/AuthFormParts.jsx'
 
 export function ForgotPasswordPage({ onGoHome }) {
   const [email, setEmail] = useState('')
