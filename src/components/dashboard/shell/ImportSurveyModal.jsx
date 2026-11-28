@@ -96,43 +96,39 @@ export function ImportSurveyModal({ open, onClose, onImported, canImport }) {
       </div>
 
       {canImport && (
-        <div className="flex flex-wrap gap-2 mb-4 p-3 rounded-xl bg-ink-50 border border-ink-100">
-          <a
-            href={TEMPLATE_XLSX}
-            download="survey-import-template.xlsx"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800"
-          >
-            <Download size={14} /> Excel template
-          </a>
-          <a
-            href={TEMPLATE_TXT}
-            download="survey-import-text-outline-sample.txt"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800"
-          >
-            <Download size={14} /> Text sample
-          </a>
-          <span className="text-xs text-ink-400 w-full sm:w-auto sm:ml-auto">
-            Full guide: <code className="text-ink-500">docs/SURVEY_IMPORT.md</code>
-          </span>
-        </div>
-      )}
-
-      {canImport && (
-        <div className="flex gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setTab('file')}
-            className={`flex-1 py-2 text-sm rounded-lg border ${tab === 'file' ? 'border-brand-400 bg-brand-50 text-brand-800' : 'border-ink-200'}`}
-          >
-            <Upload size={14} className="inline mr-1" /> File
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('text')}
-            className={`flex-1 py-2 text-sm rounded-lg border ${tab === 'text' ? 'border-brand-400 bg-brand-50 text-brand-800' : 'border-ink-200'}`}
-          >
-            <FileText size={14} className="inline mr-1" /> Text outline
-          </button>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="flex flex-col gap-1.5">
+            <a
+              href={TEMPLATE_XLSX}
+              download="survey-import-template.xlsx"
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800 py-1"
+            >
+              <Download size={13} /> Excel template
+            </a>
+            <button
+              type="button"
+              onClick={() => setTab('file')}
+              className={`w-full py-2.5 text-sm rounded-lg border transition-colors ${tab === 'file' ? 'border-brand-400 bg-brand-50 text-brand-800' : 'border-ink-200 hover:border-ink-300'}`}
+            >
+              <Upload size={14} className="inline mr-1" /> File
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <a
+              href={TEMPLATE_TXT}
+              download="survey-import-text-outline-sample.txt"
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800 py-1"
+            >
+              <Download size={13} /> Text sample
+            </a>
+            <button
+              type="button"
+              onClick={() => setTab('text')}
+              className={`w-full py-2.5 text-sm rounded-lg border transition-colors ${tab === 'text' ? 'border-brand-400 bg-brand-50 text-brand-800' : 'border-ink-200 hover:border-ink-300'}`}
+            >
+              <FileText size={14} className="inline mr-1" /> Text outline
+            </button>
+          </div>
         </div>
       )}
 
