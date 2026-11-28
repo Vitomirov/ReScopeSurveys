@@ -44,7 +44,7 @@ export const IMPORT_TYPE_REFERENCE = [
     tier: 'A',
     label: 'Matrix grid',
     textOutline: '@matrix stem, then row: and col: lines',
-    workbook: 'questionType=matrix (rows/columns defaulted — edit in builder)',
+    workbook: 'questionType=matrix; prefer Matrix sheet (axis=row|col). Defaults if omitted.',
   },
   {
     questionType: 'page_break',

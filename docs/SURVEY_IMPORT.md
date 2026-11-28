@@ -99,28 +99,49 @@ Codes in the import block are remapped automatically (no collision errors).
 
 ## 5. Workbook structure (Excel / CSV)
 
+**Required sheets:** Survey, Items, Options  
+**Optional sheets:** Logic, Matrix  
+**Reference sheets (humans / AI):** README, Authoring, QuestionTypes
+
+Regenerate the reference workbook: `node scripts/dev/generate-survey-import-template.mjs`.
+
 ### Sheet: Survey
 
 Two columns: `key`, `value` (one setting per row).
 
-| key | Example value |
-|-----|----------------|
-| title | Customer satisfaction study |
-| internalName | CSAT wave 1 |
-| surveyCode | CSAT01 |
-| clientName | Exact name from Platform → Clients (optional) |
-| topicName | Exact name from Topics (optional) |
-| surveyTypeName | Exact name from Audience types (optional) |
+| key | Example | Notes |
+|-----|---------|--------|
+| title | Customer satisfaction study | Required for a useful import |
+| internalName | CSAT wave 1 | |
+| surveyCode | CSAT01 | |
+| description | … | Optional |
+| clientName / topicName / surveyTypeName | Exact Platform list names | Optional |
+| showCoverPage | Y / N | Default Y |
+| startButtonText | Start | |
+| onePerPage | Y / N | Default Y — inserts page breaks between questions on create |
+| disableBackButton | Y / N | Typical **Y** on screeners |
+| showProgressBar | Y / N | Default Y |
+| fingerprinting | Y / N | Enables device fingerprint with recommended signals |
+| navigationLockAllPagesSeconds | 10 | Blank = off; forces dwell on every page |
+| terminateTitle / terminateMessage | … | Screenout copy |
+| completeTitle / closedTitle / closedMessage / redirectTitle / redirectMessage | … | Optional screen copy |
 
 ### Sheet: Items
 
 | Column | Required | Notes |
 |--------|----------|--------|
 | code | Yes | Unique, e.g. `Q1`, `PB1` |
-| itemType | Yes | `question`, `page_break`, `text_block` |
-| questionType | For questions | e.g. `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` |
+| itemType | Yes | `question`, `page_break`, `text_block` (`group` / `termination_block` stubs OK) |
+| questionType | For questions | See QuestionTypes sheet |
 | text | For questions | Question stem |
 | required | Optional | `Y` / `N` (default Y for choice) |
+| multiline | Optional | `Y` for long `open_text` |
+| randomizeOptions | Optional | `Y` / `N` |
+| terminationLogic | Optional | `if_any` (default) or `if_none` (with Logic sheet) |
+| branchLogic | Optional | `if_any` / `if_none` |
+| branchNoneTargetCode | Optional | Page-break code or `__start__` |
+| navigationLockSeconds | Optional | On `page_break` only — per-page dwell |
+| title / content | Text blocks | |
 
 ### Sheet: Options
 
@@ -129,19 +150,64 @@ Two columns: `key`, `value` (one setting per row).
 | questionCode | Yes | Must match Items.code |
 | optionCode | Yes | Unique, e.g. `Q1_O1` |
 | text | Yes | Option label |
-| terminates | Optional | `Y` = screenout on this option |
-| isExclusive | Optional | Multi-select “none of the above” style |
+| terminates | Optional | `Y` = screenout when this option is selected |
+| isExclusive | Optional | Multi-select “none of the above” |
+
+**Do not** put `terminates=Y` on options when the rule is “selected *only* this / lacking any of X”. Use **Logic** + `terminationLogic` instead.
+
+### Sheet: Logic (optional)
+
+| Column | Notes |
+|--------|--------|
+| questionCode | Item code the rule hangs on |
+| action | `terminate` or `branch` |
+| optionCodes | Comma-separated option codes |
+| matchMode | `any` (default) or `all` |
+| targetPageCode | Required for `branch` — page_break code or `__start__` |
+| note | Optional cause / builder label |
+| ruleType | Usually `choice` (default) |
+
+**Combo screenout pattern** (e.g. must use espresso *or* capsule *or* filter):
+
+1. On Items: `terminationLogic = if_none`
+2. On Logic: one `terminate` row with `optionCodes` = the qualifying options (`matchMode=any`)
+
+Terminates when **none** of those options are selected.
+
+**Skip-to-page:** `action=branch` + `targetPageCode` of a later page break. Only add when the brief needs routing.
+
+### Sheet: Matrix (optional)
+
+| Column | Notes |
+|--------|--------|
+| questionCode | Matrix question code |
+| axis | `row` or `col` |
+| text | Label |
+| code | Optional stable code (`Q8_R1`) for future Logic refs |
+
+If omitted, matrix questions keep builder defaults (warning).
+
+### Senior authoring (AI / agency)
+
+Workbook sheet **Authoring** encodes judgment rules. Summary:
+
+- Hard single-choice screenouts → `terminates=Y`
+- “Lacks any of…” multi-select → `if_none` + Logic
+- Skip logic only when the brief requires it — do not invent branches
+- Screener defaults: `onePerPage=Y`, `disableBackButton=Y`, `fingerprinting=Y` (online); leave dwell lock blank unless specified
+- Do not turn on every setting on every survey
 
 ### Question types (import tiers)
 
 Canonical keys match the builder (`questionHelpers.js`). Workbook sheet **QuestionTypes** lists every type with text-outline hints.
 
-- **Tier A (full):** `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` (defaults for rows/columns — review in builder), `page_break`, `text_block`
+- **Tier A (full):** `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` (prefer Matrix sheet for rows/cols), `page_break`, `text_block`
 - **Tier B (partial stub):** `maxdiff`, `semantic_diff`, `bipolar_matrix`, `constant_sum`, `card_sort`, `ranking`, `slider`, `nps`, `star_rating`, `cascade`, `date`, `phone`, `textbox_list`, `image_choice_single`, `image_choice_multi` — stem + type imported; finish setup in builder (warnings shown)
+- **Choice without Options rows:** still imports (pending); warning `CHOICE_OPTIONS` — add options in builder before Live
 - **Legacy JSON aliases** (normalized on import): `max_diff` → `maxdiff`, `semantic_differential` → `semantic_diff`, `bipolar` → `bipolar_matrix`, `image_choice` → `image_choice_single`
 - **Images:** no binary image import; add images in the builder after import
 
-`settings.onePerPage` in JSON import can insert page breaks between questions when enabled (workbook path uses item list order as authored).
+`settings.onePerPage` in JSON/workbook import inserts page breaks between questions when enabled.
 
 ---
 
@@ -276,14 +342,17 @@ Used by the ReScope UI (`VITE_USE_API=true`):
 
 ## 9. AI / MCP prompt hints
 
-When Claude (or any client) builds schema v1 JSON:
+When Claude / ChatGPT / Gemini builds a workbook or schema v1 JSON:
 
+- Prefer the Excel template sheets (Survey / Items / Options / Logic / Matrix) or text outline; JSON uses the same item fields.
 - `schemaVersion: 1` only.
-- One page break item between pages if `settings.onePerPage` is true (JSON).
-- Screening: `terminates: true` on options or termination rules (advanced sheets — phase 2).
-- Branch targets reference **page break codes** that appear later in `items[]`.
+- Follow **Authoring** sheet: only settings and logic the brief needs.
+- Screening: simple fails → `terminates: true` / `terminates=Y`; combo multi-select → `terminationLogic: if_none` + Logic/`terminationRules`.
+- Branch targets reference **page break codes** that appear later in `items[]` (`targetPageCode` / `targetPageBreakId`).
+- Matrix grids: emit Matrix sheet rows/cols (or `matrixRows` / `matrixColumns` in JSON).
 - Use builder `questionType` keys (`maxdiff`, `semantic_diff`, `bipolar_matrix`, `image_choice_single`, …). Legacy aliases above are accepted.
 - Partial types: still emit `questionType` and `text` so the stub appears in the builder.
+- Example production-shaped workbook: `public/templates/coffee-consumption-habits-screener.xlsx`.
 
 ---
 

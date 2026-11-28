@@ -10,6 +10,7 @@ const APPEND_ALLOWED = new Set(['draft', 'pending_review'])
 
 export function buildImportSurveyMeta(surveyInput, meta) {
   const now = new Date().toISOString()
+  const settingsIn = surveyInput?.settings || {}
   return {
     title: surveyInput?.title || 'Imported survey',
     internalName: surveyInput?.internalName || '',
@@ -22,7 +23,7 @@ export function buildImportSurveyMeta(surveyInput, meta) {
     clientId: '',
     topicId: '',
     surveyType: '',
-    showCoverPage: true,
+    showCoverPage: surveyInput?.showCoverPage !== false,
     startButtonText: surveyInput?.startButtonText,
     createdAt: now,
     updatedAt: now,
@@ -34,8 +35,8 @@ export function buildImportSurveyMeta(surveyInput, meta) {
       externalId: meta.externalId || null,
     },
     settings: {
-      onePerPage: surveyInput?.settings?.onePerPage ?? true,
-      ...(surveyInput?.settings || {}),
+      onePerPage: settingsIn.onePerPage ?? true,
+      ...settingsIn,
     },
   }
 }

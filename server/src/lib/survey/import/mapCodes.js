@@ -17,6 +17,13 @@ export function collectCodes(items) {
         codes.add(opt.code)
       }
     }
+    for (const label of [...(item.matrixRows || []), ...(item.matrixColumns || [])]) {
+      if (!label?.code) continue
+      if (codes.has(label.code)) {
+        errors.push({ code: 'DUPLICATE_CODE', message: `Duplicate matrix code: ${label.code}` })
+      }
+      codes.add(label.code)
+    }
   }
 
   return { codes, errors }
@@ -39,6 +46,11 @@ export function mapCodesToIds(items, { existingCodes = new Set() } = {}) {
         if (!codeToId.has(opt.code)) {
           codeToId.set(opt.code, randomUUID())
         }
+      }
+    }
+    for (const label of [...(item.matrixRows || []), ...(item.matrixColumns || [])]) {
+      if (label?.code && !codeToId.has(label.code)) {
+        codeToId.set(label.code, randomUUID())
       }
     }
   }

@@ -16,6 +16,24 @@ const importOptionSchema = z.object({
   isExclusive: z.boolean().optional(),
 })
 
+const matrixLabelSchema = z.object({
+  text: z.string().min(1),
+  code: z.string().regex(codeRegex).optional(),
+})
+
+const importRuleSchema = z.object({
+  optionCodes: z.array(z.string().regex(codeRegex)).optional(),
+  matchMode: z.enum(['any', 'all']).optional(),
+  targetPageCode: optionalString,
+  note: optionalString,
+  ruleType: z.enum(['choice', 'text', 'matrix', 'date', 'slider']).optional(),
+  textOperator: optionalString,
+  textValue: optionalString,
+  textValue2: optionalString,
+  matrixRowCode: optionalString,
+  matrixColumnCodes: z.array(z.string()).optional(),
+})
+
 const importItemSchema = z.object({
   code: z.string().regex(codeRegex),
   itemType: z.enum(['question', 'page_break', 'text_block', 'group', 'termination_block']),
@@ -23,9 +41,18 @@ const importItemSchema = z.object({
   text: optionalString,
   required: z.boolean().nullish().transform(v => v ?? undefined),
   multiline: z.boolean().nullish().transform(v => v ?? undefined),
+  randomizeOptions: z.boolean().nullish().transform(v => v ?? undefined),
   options: z.array(importOptionSchema).optional(),
   title: optionalString,
   content: optionalString,
+  navigationLockSeconds: z.number().int().positive().optional(),
+  terminationLogic: z.enum(['if_any', 'if_none']).optional(),
+  branchLogic: z.enum(['if_any', 'if_none']).optional(),
+  branchNoneTargetCode: optionalString,
+  terminationRules: z.array(importRuleSchema).optional(),
+  branchRules: z.array(importRuleSchema).optional(),
+  matrixRows: z.array(matrixLabelSchema).optional(),
+  matrixColumns: z.array(matrixLabelSchema).optional(),
 })
 
 const allowedTypes = [...TIER_A_FULL, ...TIER_B_PARTIAL].filter(t => t !== 'page_break' && t !== 'text_block')
@@ -43,6 +70,8 @@ export const importPayloadSchema = z.object({
     clientName: optionalString,
     topicName: optionalString,
     surveyTypeName: optionalString,
+    startButtonText: optionalString,
+    showCoverPage: z.boolean().nullish().transform(v => v ?? undefined),
     status: z.enum(['pending_review']).nullish().transform(v => v ?? undefined),
     settings: z.record(z.unknown()).optional(),
   }).optional().default({}),
@@ -50,23 +79,14 @@ export const importPayloadSchema = z.object({
 }).superRefine((val, ctx) => {
   for (const [i, item] of val.items.entries()) {
     if (item.itemType !== 'question') continue
-    {
-      if (!item.questionType || !allowedTypes.includes(item.questionType)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['items', i, 'questionType'],
-          message: `Unsupported or missing questionType`,
-        })
-      }
-      const choice = ['single_select', 'multi_select', 'dropdown'].includes(item.questionType)
-      if (choice && (!item.options || item.options.length < 1)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['items', i, 'options'],
-          message: 'Choice questions require at least one option',
-        })
-      }
+    if (!item.questionType || !allowedTypes.includes(item.questionType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['items', i, 'questionType'],
+        message: `Unsupported or missing questionType`,
+      })
     }
+    // Missing options on choice types: warning in buildRuntimeItems (import → pending QA)
   }
 })
 
