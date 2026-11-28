@@ -7,6 +7,7 @@ import {
   ConditionSummaryInline,
   buildConditionLogicString,
 } from '@/components/shared/conditions/ConditionBuilder'
+import { ImportQuestionReview } from '@/components/builder/import/ImportQuestionReview'
 
 // ─── Condition summary for collapsed view ──────────────────────────────────
 function CollapsedSummary({ conditions, questions }) {
@@ -98,6 +99,10 @@ export const TerminationBlockItem = memo(function TerminationBlockItem({
               <ChevronRight size={15} />
             </div>
           </div>
+        </div>
+
+        <div className="bg-white/5">
+          <ImportQuestionReview item={item} dispatch={dispatch} />
         </div>
 
         {/* ── Expanded condition editor ── */}

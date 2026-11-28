@@ -13,6 +13,8 @@ import { getTypeMeta, TYPE_COLORS, TYPE_ICONS, isChoiceType, isMatrixType, QUEST
 import { makeOption } from '@/store/surveyStore'
 import { DEFAULT_DATE_FORMAT } from '@/constants/survey/surveyDefaults'
 import { resolveDateFormat } from '@/utils/format/dateSurveyFormat'
+import { ImportQuestionReview } from '@/components/builder/import/ImportQuestionReview'
+import { getItemImportIssues } from '@/utils/survey/importReview'
 
 // ─── Token Picker — insert piping reference into question text ─────────────
 function TokenPicker({ availableQuestions, onInsert }) {
@@ -152,10 +154,20 @@ export const QuestionCard = memo(function QuestionCard({
   const openTextSet    = question.options?.some(o => o.openText?.enabled) ?? false
   const matrixRows     = question.matrixConfig?.rows?.length ?? question.bipolarConfig?.rows?.length ?? 0
   const matrixCols     = question.matrixConfig?.columns?.length ?? 0
+  const importIssues   = getItemImportIssues(question)
+  const importNeedsAction = importIssues.some(i => i.severity === 'action')
 
   return (
     <div ref={setNodeRef} style={style} className={`question-enter ${isDragging ? 'opacity-40' : ''}`}>
-      <div className={`card transition-all duration-150 shadow-sm ${isActive ? 'border-brand-400 shadow-md shadow-brand-100/80' : 'hover:border-ink-300 hover:shadow-md hover:shadow-ink-900/[0.04]'}`}>
+      <div className={`card transition-all duration-150 shadow-sm ${
+        isActive
+          ? 'border-brand-400 shadow-md shadow-brand-100/80'
+          : importNeedsAction
+            ? 'border-amber-300 hover:border-amber-400 hover:shadow-md'
+            : importIssues.length
+              ? 'border-violet-200 hover:border-violet-300 hover:shadow-md'
+              : 'hover:border-ink-300 hover:shadow-md hover:shadow-ink-900/[0.04]'
+      }`}>
 
         {/* ── Header ────────────────────────────────────────────────── */}
         <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 cursor-pointer" onClick={() => onActivateItem(question.id)}>
@@ -230,6 +242,12 @@ export const QuestionCard = memo(function QuestionCard({
                 }
 
                 {/* Badges */}
+                {importNeedsAction && (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">Needs options</span>
+                )}
+                {!importNeedsAction && importIssues.length > 0 && (
+                  <span className="text-xs font-semibold text-violet-800 bg-violet-100 px-1.5 py-0.5 rounded">Review</span>
+                )}
                 {anchorCount > 0 && <span className="text-xs text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded">⚓ {anchorCount}</span>}
                 {exclusiveSet    && <span className="text-xs text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">⊘</span>}
                 {openTextSet     && <span className="text-xs text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded">💬</span>}
@@ -262,6 +280,8 @@ export const QuestionCard = memo(function QuestionCard({
             )}
           </div>
         </div>
+
+        <ImportQuestionReview item={question} dispatch={dispatch} issues={importIssues} />
 
         {/* ── Expanded editor ───────────────────────────────────────── */}
         {isActive && (

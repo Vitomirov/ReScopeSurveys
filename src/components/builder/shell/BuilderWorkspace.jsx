@@ -28,7 +28,7 @@ export function BuilderWorkspace({
     <AppWorkspaceColumns className="flex-1 min-h-0 lg:overflow-hidden" sidebar={<BuilderSidebar items={state.items} addActions={addActions} />}>
       <div className="flex-1 min-h-0 flex flex-col lg:overflow-hidden">
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6 lg:py-6 lg:pr-0.5">
-          <SurveyHeaderCard survey={state.survey} dispatch={dispatch} hasItems={hasItems} />
+          <SurveyHeaderCard survey={state.survey} items={state.items} dispatch={dispatch} hasItems={hasItems} />
           <SurveyItemList
             state={state}
             dispatch={dispatch}

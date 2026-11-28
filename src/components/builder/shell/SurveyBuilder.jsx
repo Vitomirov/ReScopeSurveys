@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useMemo } from 'react'
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react'
 import { PageLoader } from '@/components/ui'
 import { useSurveyBuilder } from '@/components/builder/hooks/useSurveyBuilder'
 import { BuilderHeader } from '@/components/builder/shell/BuilderHeader'
@@ -26,18 +26,10 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
       .catch(() => setCanImport(false))
   }, [])
 
-  const importItemWarnings = useMemo(() => {
-    const out = []
-    for (const item of builder.state.items || []) {
-      if (item.importMeta?.partial && item.itemType === 'question') {
-        out.push({
-          code: 'PARTIAL_TYPE',
-          message: `${item.text || 'Untitled'} (${item.questionType}): finish setup in builder.`,
-        })
-      }
-    }
-    return out
-  }, [builder.state.items])
+  // Always open (do not toggle closed) when jumping from the import review bar.
+  const handleJumpToImportItem = useCallback((id) => {
+    builder.dispatch({ type: 'SET_ACTIVE_ITEM', id })
+  }, [builder.dispatch])
 
   if (builder.state.showPreview) {
     return (
@@ -72,7 +64,8 @@ export function SurveyBuilder({ initialState, initialRevision = null, onBackToDa
 
       <ImportReviewBanner
         survey={builder.state.survey}
-        itemWarnings={importItemWarnings}
+        items={builder.state.items}
+        onJumpToItem={handleJumpToImportItem}
       />
 
       <AppAlignedBody

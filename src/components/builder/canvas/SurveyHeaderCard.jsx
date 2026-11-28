@@ -7,7 +7,7 @@ import {
 } from '@/components/builder'
 import { DEFAULT_SCREEN_MESSAGES } from '@/constants/survey/surveyDefaults'
 
-export function SurveyHeaderCard({ survey, dispatch, hasItems = false }) {
+export function SurveyHeaderCard({ survey, items = [], dispatch, hasItems = false }) {
   const prevHasItemsRef = useRef(hasItems)
   const [settingsOpen, setSettingsOpen] = useState(!hasItems)
 
@@ -50,7 +50,7 @@ export function SurveyHeaderCard({ survey, dispatch, hasItems = false }) {
             <Settings2 size={12} /> Survey settings
           </button>
           <BrandingSettings survey={survey} dispatch={dispatch} />
-          <SurveyMetadata survey={survey} dispatch={dispatch} />
+          <SurveyMetadata survey={survey} items={items} dispatch={dispatch} />
           <CoverPageSettings survey={survey} dispatch={dispatch} />
           <ProgressBarSettings survey={survey} dispatch={dispatch} />
           <BackButtonSettings survey={survey} dispatch={dispatch} />

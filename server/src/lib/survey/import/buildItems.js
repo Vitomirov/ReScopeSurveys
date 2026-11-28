@@ -54,6 +54,10 @@ function makeQuestionSkeleton(questionType, text, id, { partial = false } = {}) 
   return base
 }
 
+function mergeImportMeta(q, patch) {
+  q.importMeta = { ...(q.importMeta || {}), ...patch }
+}
+
 function resolveOptionIds(optionCodes, codeToId, questionCode, warnings) {
   if (!optionCodes?.length) return []
   const ids = []
@@ -210,10 +214,11 @@ export function buildRuntimeItems(importItems, codeToId, { warnings = [] } = {})
         itemType: 'termination_block',
         title: raw.title || '',
         conditions: [],
+        importMeta: { stub: true },
       })
       warnings.push({
         code: 'TERMINATION_BLOCK_STUB',
-        message: `Termination block ${raw.code}: conditions not imported — finish in builder.`,
+        message: `${raw.code}: termination block imported without conditions — finish in the builder.`,
       })
       continue
     }
@@ -222,7 +227,7 @@ export function buildRuntimeItems(importItems, codeToId, { warnings = [] } = {})
 
     const tier = tierForQuestionType(raw.questionType)
     const partial = tier === 'B' || (tier === 'C' && !TIER_C_IMAGE.has(raw.questionType))
-    const q = makeQuestionSkeleton(raw.questionType, raw.text, id, { partial: partial || tier === 'B' })
+    const q = makeQuestionSkeleton(raw.questionType, raw.text, id, { partial })
 
     q.required = raw.required !== false
     if (raw.questionType === 'open_text') {
@@ -243,16 +248,17 @@ export function buildRuntimeItems(importItems, codeToId, { warnings = [] } = {})
       } else {
         warnings.push({
           code: 'CHOICE_OPTIONS',
-          message: `Choice ${raw.code}: no options in workbook — add in builder before Live.`,
+          message: `${raw.code}: add answer options in the builder before going Live.`,
         })
       }
     }
 
     const matrixApplied = applyMatrixLabels(q, raw, codeToId)
     if (raw.questionType === 'matrix' && tier === 'A' && !matrixApplied) {
+      mergeImportMeta(q, { needsMatrixReview: true })
       warnings.push({
         code: 'MATRIX_DEFAULTS',
-        message: `Matrix ${raw.code}: rows/columns use builder defaults — review and edit in builder.`,
+        message: `${raw.code}: matrix uses default rows/columns — confirm labels in the builder.`,
       })
     }
 
@@ -276,10 +282,10 @@ export function buildRuntimeItems(importItems, codeToId, { warnings = [] } = {})
     q.terminationRules = mapImportRules(raw.terminationRules, codeToId, raw.code, warnings)
     q.branchRules = mapImportRules(raw.branchRules, codeToId, raw.code, warnings, { requireTarget: true })
 
-    if (tier === 'B') {
+    if (partial) {
       warnings.push({
         code: 'PARTIAL_TYPE',
-        message: `Question ${raw.code} (${raw.questionType}): finish setup in builder before going Live.`,
+        message: `${raw.code} (${raw.questionType}): finish type setup in the builder before going Live.`,
       })
     }
 

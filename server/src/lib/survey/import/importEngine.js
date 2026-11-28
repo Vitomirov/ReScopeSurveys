@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { importPayloadSchema, formatZodErrors, normalizeImportPayload } from './schema.js'
+import {
+  importPayloadSchema,
+  formatZodErrors,
+  normalizeImportPayloadWithWarnings,
+} from './schema.js'
 import { collectCodes, mapCodesToIds } from './mapCodes.js'
 import { buildRuntimeItems } from './buildItems.js'
 import { IMPORT_PENDING_STATUS } from '../../../../../shared/surveyImport/questionTiers.js'
@@ -64,18 +68,24 @@ function insertPageBreaks(items, onePerPage) {
 }
 
 export async function runImport(prisma, ctx, rawPayload, meta, { cache, dryRun = false } = {}) {
-  const parsed = importPayloadSchema.safeParse(normalizeImportPayload(rawPayload))
+  const { payload: normalized, warnings: normalizeWarnings } = normalizeImportPayloadWithWarnings(rawPayload)
+  const parsed = importPayloadSchema.safeParse(normalized)
   if (!parsed.success) {
-    return { ok: false, status: 422, errors: formatZodErrors(parsed.error) }
+    // Last-resort: still avoid opaque Zod noise — surface as soft errors only when empty/unusable
+    return { ok: false, status: 422, errors: formatZodErrors(parsed.error), warnings: normalizeWarnings }
   }
 
   const payload = parsed.data
   const mode = meta.mode || payload.mode || 'create'
-  const warnings = [...(meta.parserWarnings || [])]
+  const warnings = [...(meta.parserWarnings || []), ...normalizeWarnings]
 
   const { errors: codeErrors } = collectCodes(payload.items)
-  if (codeErrors.length) {
-    return { ok: false, status: 422, errors: codeErrors, warnings }
+  // Duplicate codes: warn and continue — mapCodesToIds still assigns unique UUIDs per occurrence
+  for (const err of codeErrors) {
+    warnings.push({
+      code: err.code || 'DUPLICATE_CODE',
+      message: `${err.message} — imported anyway; review codes in the builder.`,
+    })
   }
 
   const { codeToId } = mapCodesToIds(payload.items)

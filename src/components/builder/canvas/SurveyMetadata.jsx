@@ -4,6 +4,7 @@ import {
   SURVEY_STATUSES,
   loadClients, loadTopics, loadSurveyTypes,
 } from '@/utils/data/platformStore'
+import { collectImportReviewEntries, summarizeImportReview } from '@/utils/survey/importReview'
 import { fetchClients, fetchTopics, fetchSurveyTypes } from '@/api/platform/platform'
 import { useApi } from '@/config/api'
 import { getSession, updateSession } from '@/utils/data/authStore'
@@ -35,7 +36,7 @@ function LabelSelect({ label, value, options, onChange }) {
   )
 }
 
-export function SurveyMetadata({ survey, dispatch }) {
+export function SurveyMetadata({ survey, items = [], dispatch }) {
   const [clients, setClients] = useState(loadClients)
   const [topics,  setTopics]  = useState(loadTopics)
   const [surveyTypes, setSurveyTypes] = useState(loadSurveyTypes)
@@ -63,6 +64,26 @@ export function SurveyMetadata({ survey, dispatch }) {
 
   const set = (field, value) =>
     dispatch({ type: 'SET_SURVEY_FIELD', field, value })
+
+  const setStatus = (next) => {
+    if (next === 'live') {
+      const review = summarizeImportReview(collectImportReviewEntries(items))
+      if (review.total > 0) {
+        const ok = window.confirm(
+          review.action > 0
+            ? `${review.openItems} imported question(s) still need attention (e.g. missing options or broken skips).\n\nGo Live anyway? Respondents may hit incomplete questions.`
+            : `${review.openItems} imported item(s) are still marked for review.\n\nGo Live anyway?`,
+        )
+        if (!ok) return
+      } else if (survey.status === 'pending_review') {
+        const ok = window.confirm(
+          'This survey is still Pending. Confirm you have reviewed content and logic before going Live.',
+        )
+        if (!ok) return
+      }
+    }
+    set('status', next)
+  }
 
   const validateCode = (code) => {
     if (!code) { setCodeError(''); return }
@@ -120,13 +141,18 @@ export function SurveyMetadata({ survey, dispatch }) {
           <label className="text-xs text-ink-500 mb-1 block">Status</label>
           <select
             value={survey.status || 'draft'}
-            onChange={e => set('status', e.target.value)}
+            onChange={e => setStatus(e.target.value)}
             className="input-base text-sm w-full"
           >
             {SURVEY_STATUSES.map(s => (
               <option key={s.id} value={s.id}>{s.label}</option>
             ))}
           </select>
+          {survey.status === 'pending_review' && (
+            <p className="text-xs text-violet-700 mt-1">
+              Pending imports stay off public links until you set Draft or Live.
+            </p>
+          )}
         </div>
 
         <div>

@@ -37,9 +37,10 @@ Import (any channel) → pending → human QA in builder → Draft or Live
 ```
 
 1. Import completes → dashboard shows **pending** (distinct from **Draft**).
-2. Open the survey in the builder — fix text, options, partial question types, logic.
-3. In survey metadata, set **Draft** (more editing) or **Live** (publish).
-4. Optional: use **Preview** before going Live.
+2. Open the survey in the builder — the import review bar lists open items; each flagged question shows its own callout (missing options, stubs, matrix defaults, broken skips).
+3. Fix or **Mark reviewed** on each item. Choice options clear automatically once added.
+4. In survey metadata, set **Draft** or **Live** (Live asks to confirm if review flags remain).
+5. Optional: use **Preview** before going Live.
 
 **Append import** adds questions to an existing survey. Allowed only when status is **Draft** or **pending**. Append to **Live** surveys is blocked.
 
@@ -204,6 +205,7 @@ Canonical keys match the builder (`questionHelpers.js`). Workbook sheet **Questi
 - **Tier A (full):** `single_select`, `multi_select`, `dropdown`, `open_text`, `matrix` (prefer Matrix sheet for rows/cols), `page_break`, `text_block`
 - **Tier B (partial stub):** `maxdiff`, `semantic_diff`, `bipolar_matrix`, `constant_sum`, `card_sort`, `ranking`, `slider`, `nps`, `star_rating`, `cascade`, `date`, `phone`, `textbox_list`, `image_choice_single`, `image_choice_multi` — stem + type imported; finish setup in builder (warnings shown)
 - **Choice without Options rows:** still imports (pending); warning `CHOICE_OPTIONS` — add options in builder before Live
+- **Soft fields:** blank/invalid `ruleType`, `matchMode`, unknown `questionType`, messy codes are coerced (defaults / `open_text`) with warnings — import should not 422 on AI workbook noise
 - **Legacy JSON aliases** (normalized on import): `max_diff` → `maxdiff`, `semantic_differential` → `semantic_diff`, `bipolar` → `bipolar_matrix`, `image_choice` → `image_choice_single`
 - **Images:** no binary image import; add images in the builder after import
 

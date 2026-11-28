@@ -83,6 +83,7 @@ function parseLogic(logicRows, warnings) {
     const matchMode = matchModeRaw === 'all' ? 'all' : 'any'
     const targetPageCode = String(cell(row, 'targetPageCode', 'TargetPageCode', 'target')).trim()
     const note = String(cell(row, 'note', 'Note')).trim()
+    // ruleType / matchMode coerced in schema normalize — pass through raw blanks/junk
     const ruleType = String(cell(row, 'ruleType', 'RuleType')).trim().toLowerCase() || undefined
     const textOperator = String(cell(row, 'textOperator', 'TextOperator')).trim() || undefined
     const textValue = String(cell(row, 'textValue', 'TextValue')).trim() || undefined
@@ -97,7 +98,7 @@ function parseLogic(logicRows, warnings) {
       matchMode,
       targetPageCode: targetPageCode || undefined,
       note: note || undefined,
-      ruleType,
+      ...(ruleType ? { ruleType } : {}),
       textOperator,
       textValue,
       textValue2,
