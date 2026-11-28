@@ -134,7 +134,7 @@ export function ChoiceEditor({ question, dispatch, focusOptionId, availableQuest
 
       <SectionLabel>Answer Options</SectionLabel>
       <p className="text-xs text-ink-400 mb-2">
-        <strong>Enter</strong> to add next · <strong>Paste lines</strong> to bulk-add ·{' '}
+        <strong>Enter</strong> to add next · <strong>Paste lines or commas</strong> to bulk-add ·{' '}
         <UserX size={10} className="inline text-rose-500" /> for instant screen-out
       </p>
 

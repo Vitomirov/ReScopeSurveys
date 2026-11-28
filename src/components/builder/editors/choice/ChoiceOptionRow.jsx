@@ -3,6 +3,7 @@ import { Trash2, Anchor, Ban, MessageSquare, GripVertical, UserX } from 'lucide-
 import { Toggle, IconBtn, Tip } from '@/components/ui'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { splitBulkPasteValues } from '@/utils/format/bulkPaste'
 
 function AnchorBtn({ position, onChange }) {
   const states = [null, 'top', 'bottom']
@@ -47,15 +48,14 @@ export function ChoiceOptionRow({ option, questionId, questionType, dispatch, ca
   const updateOpenText = (patch) =>
     dispatch({ type: 'UPDATE_OPTION_OPEN_TEXT', questionId, optionId: option.id, patch })
 
-  // ── Paste handler: split pasted text by newlines → multiple options
+  // ── Paste handler: newlines or comma-separated values → multiple options
   const handlePaste = (e) => {
-    const text = e.clipboardData.getData('text')
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    const lines = splitBulkPasteValues(e.clipboardData.getData('text'))
     if (lines.length > 1) {
       e.preventDefault()
       dispatch({ type: 'PASTE_OPTIONS', questionId, currentOptionId: option.id, lines })
     }
-    // Single line: allow default paste behaviour
+    // Single value: allow default paste behaviour
   }
 
   // ── Enter key: create new option below
@@ -95,7 +95,7 @@ export function ChoiceOptionRow({ option, questionId, questionType, dispatch, ca
             onChange={e => update({ text: e.target.value })}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
-            placeholder={`Option ${index + 1}  (Enter to add next, paste multiple lines)`}
+            placeholder={`Option ${index + 1}  (Enter to add next, paste lines or commas)`}
             className="input-base py-1.5 text-sm"
           />
 

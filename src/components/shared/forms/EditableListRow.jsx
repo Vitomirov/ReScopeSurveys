@@ -1,9 +1,10 @@
 import { Trash2, GripVertical } from 'lucide-react'
+import { splitBulkPasteValues } from '@/utils/format/bulkPaste'
 
 /**
  * Single editable list row with Enter-to-add, Backspace-to-delete, and
- * multi-line paste-to-bulk-add. Used by ranking, constant-sum, textbox-list,
- * maxdiff, and card-sort editors.
+ * multi-line / comma-separated paste-to-bulk-add. Used by ranking,
+ * constant-sum, textbox-list, maxdiff, matrix, and card-sort editors.
  */
 export function EditableListRow({
   item,
@@ -41,7 +42,7 @@ export function EditableListRow({
   }
 
   const handlePaste = (e) => {
-    const lines = e.clipboardData.getData('text').split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    const lines = splitBulkPasteValues(e.clipboardData.getData('text'))
     if (lines.length <= 1) return
 
     e.preventDefault()
